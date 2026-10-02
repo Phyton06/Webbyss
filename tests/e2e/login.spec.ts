@@ -2,7 +2,7 @@ import { test, expect } from '@playwright/test';
 
 // Design tokens from src/pages/login.astro scoped styles
 const FOCUS_BORDER = 'rgb(212, 175, 106)'; // gold #d4af6a
-const CARD_BG = 'rgb(19, 26, 43)'; // card #131a2b
+const PAGE_BG = 'rgb(0, 0, 0)'; // pure black
 
 test.describe('Login Page', () => {
   test('renders login page correctly', async ({ page }) => {
@@ -16,7 +16,7 @@ test.describe('Login Page', () => {
     await expect(page.locator('img[alt="BarberShop"]')).toBeVisible();
 
     // Verify the scoped stylesheet actually applied (catches "unstyled page" regressions)
-    await expect(page.locator('.login-card')).toHaveCSS('background-color', CARD_BG);
+    await expect(page.locator('.page')).toHaveCSS('background-color', PAGE_BG);
 
     // Verify form fields exist
     await expect(page.locator('input[type="email"]')).toBeVisible();
@@ -76,7 +76,7 @@ test.describe('Login Page', () => {
     await page.goto('/Webbyss/login');
 
     // Light palette: white card instead of the dark #131a2b
-    await expect(page.locator('.login-card')).toHaveCSS('background-color', 'rgb(255, 255, 255)');
+    await expect(page.locator('.page')).toHaveCSS('background-color', 'rgb(255, 255, 255)');
     // Darkened gold for AA contrast on white
     await expect(page.locator('button[type="submit"]')).toHaveCSS(
       'background-color',
