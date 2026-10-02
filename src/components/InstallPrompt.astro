@@ -1,0 +1,231 @@
+---
+// Custom install prompt shown when beforeinstallprompt fires.
+// Injected only on pages that render it (login = app entry point).
+const logo = `${import.meta.env.BASE_URL}/assets/logo-192.png`;
+---
+
+<aside class="install" id="install-prompt" aria-live="polite" hidden>
+  <img src={logo} alt="" class="install-logo" width="44" height="44" />
+  <div class="install-copy">
+    <strong>Instalar BarberShop</strong>
+    <span>Añade la app a tu pantalla de inicio</span>
+  </div>
+  <div class="install-actions">
+    <button type="button" class="install-yes">Instalar</button>
+    <button type="button" class="install-no">Ahora no</button>
+  </div>
+</aside>
+
+<script>
+  const BASE = import.meta.env.BASE_URL;
+  const el = document.getElementById('install-prompt')!;
+  const DISMISS_KEY = 'bp-install-dismissed-at';
+  const DISMISS_COOLDOWN = 7 * 24 * 60 * 60 * 1000; // re-ask after 7 days
+
+  // ponytail: SW registration lives here (login is the app entry); move to BaseHead if other pages need it first.
+  if ('serviceWorker' in navigator) {
+    navigator.serviceWorker.register(`${BASE}/sw.js`).catch(() => {});
+  }
+
+  let deferred: BeforeInstallPromptEvent | null = null;
+
+  interface BeforeInstallPromptEvent extends Event {
+    prompt: () => Promise<void>;
+    userChoice: Promise<{ outcome: 'accepted' | 'dismissed' }>;
+  }
+
+  const dismissedAt = Number(localStorage.getItem(DISMISS_KEY) || 0);
+
+  function maybeShow() {
+    if (!deferred) return;
+    if (Date.now() - dismissedAt < DISMISS_COOLDOWN) return;
+    setTimeout(() => {
+      if (deferred) el.hidden = false;
+    }, 1200);
+  }
+
+  window.addEventListener('beforeinstallprompt', (e) => {
+    e.preventDefault();
+    deferred = e as BeforeInstallPromptEvent;
+    maybeShow();
+  });
+
+  window.addEventListener('appinstalled', () => {
+    el.hidden = true;
+    deferred = null;
+    localStorage.setItem(DISMISS_KEY, String(Date.now()));
+  });
+
+  el.querySelector('.install-yes')!.addEventListener('click', async () => {
+    if (!deferred) return;
+    el.hidden = true;
+    await deferred.prompt();
+    await deferred.userChoice; // outcome irrelevant: prompt only fires once per session
+    deferred = null;
+  });
+
+  el.querySelector('.install-no')!.addEventListener('click', () => {
+    el.hidden = true;
+    localStorage.setItem(DISMISS_KEY, String(Date.now()));
+  });
+</script>
+
+<style>
+  .install {
+    position: fixed;
+    left: 50%;
+    bottom: 1.25rem;
+    transform: translateX(-50%);
+    z-index: 50;
+    display: flex;
+    align-items: center;
+    gap: 0.85rem;
+    box-sizing: border-box;
+    width: min(440px, calc(100vw - 2rem));
+    padding: 0.9rem 1rem;
+    background: #0a0a0a;
+    border: 1px solid rgba(212, 175, 106, 0.45);
+    border-radius: 14px;
+    box-shadow: 0 16px 40px rgba(0, 0, 0, 0.6);
+    font-family: var(--font-atkinson, sans-serif);
+    animation: install-in 0.28s ease;
+  }
+
+  .install[hidden] {
+    display: none;
+  }
+
+  .install-logo {
+    flex-shrink: 0;
+    border-radius: 50%;
+  }
+
+  .install-copy {
+    display: flex;
+    flex-direction: column;
+    gap: 0.15rem;
+    min-width: 0;
+  }
+
+  .install-copy strong {
+    color: #f2f4f8;
+    font-size: 0.95rem;
+  }
+
+  .install-copy span {
+    color: #9aa4b8;
+    font-size: 0.8rem;
+  }
+
+  .install-actions {
+    display: flex;
+    gap: 0.5rem;
+    margin-left: auto;
+  }
+
+  .install-yes,
+  .install-no {
+    font-family: inherit;
+    font-size: 0.85rem;
+    font-weight: 700;
+    padding: 0.5rem 0.85rem;
+    border-radius: 8px;
+    cursor: pointer;
+    white-space: nowrap;
+    transition:
+      background 0.18s ease,
+      border-color 0.18s ease;
+  }
+
+  .install-yes {
+    color: #10131c;
+    background: #d4af6a;
+    border: 1px solid #d4af6a;
+  }
+
+  .install-yes:hover {
+    background: #e5c489;
+    border-color: #e5c489;
+  }
+
+  .install-no {
+    color: #9aa4b8;
+    background: transparent;
+    border: 1px solid rgba(154, 164, 184, 0.32);
+  }
+
+  .install-no:hover {
+    border-color: rgba(154, 164, 184, 0.6);
+  }
+
+  .install-yes:focus-visible,
+  .install-no:focus-visible {
+    outline: 2px solid #d4af6a;
+    outline-offset: 2px;
+  }
+
+  @keyframes install-in {
+    from {
+      opacity: 0;
+      transform: translate(-50%, 8px);
+    }
+    to {
+      opacity: 1;
+      transform: translate(-50%, 0);
+    }
+  }
+
+  @media (max-width: 480px) {
+    .install {
+      flex-wrap: wrap;
+    }
+
+    .install-actions {
+      margin-left: 0;
+      width: 100%;
+    }
+
+    .install-yes,
+    .install-no {
+      flex: 1;
+    }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .install {
+      animation: none;
+    }
+  }
+
+  @media (prefers-color-scheme: light) {
+    .install {
+      background: #ffffff;
+      border-color: rgba(138, 106, 47, 0.5);
+      box-shadow: 0 16px 40px rgba(23, 27, 38, 0.16);
+    }
+
+    .install-copy strong {
+      color: #171b26;
+    }
+
+    .install-copy span {
+      color: #5d6579;
+    }
+
+    .install-yes {
+      color: #ffffff;
+      background: #8a6a2f;
+      border-color: #8a6a2f;
+    }
+
+    .install-yes:hover {
+      background: #6f5524;
+      border-color: #6f5524;
+    }
+
+    .install-no {
+      color: #5d6579;
+      border-color: rgba(23, 27, 38, 0.25);
+    }
+  }
+</style>

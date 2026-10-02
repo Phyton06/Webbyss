@@ -5,31 +5,29 @@
   "start_url": "/Webbyss/login",
   "display": "standalone",
   "orientation": "portrait-primary",
-  "theme_color": "#1a1a2e",
-  "background_color": "#1a1a2e",
+  "theme_color": "#000000",
+  "background_color": "#000000",
   "display_override": [
     "window-control-overlay"
   ],
   "icons": [
     {
-      "src": "/Webbyss/assets/logo.jpeg",
+      "src": "/Webbyss/assets/logo-192.png",
       "sizes": "192x192",
-      "type": "image/jpeg",
+      "type": "image/png",
       "purpose": "any"
     },
     {
-      "src": "/Webbyss/assets/logo.jpeg",
+      "src": "/Webbyss/assets/logo-512.png",
       "sizes": "512x512",
-      "type": "image/jpeg",
+      "type": "image/png",
       "purpose": "any"
-    }
-  ],
-  "screenshots": [
+    },
     {
-      "src": "/Webbyss/assets/logo.jpeg",
-      "sizes": "384x512",
-      "type": "image/jpeg",
-      "form_factor": "wide"
+      "src": "/Webbyss/assets/logo-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "maskable"
     }
   ]
 }

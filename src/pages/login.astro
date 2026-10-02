@@ -1,5 +1,6 @@
 ---
 import BaseHead from '../components/BaseHead.astro';
+import InstallPrompt from '../components/InstallPrompt.astro';
 ---
 
 <BaseHead title="BarberShop Login" description="Inicio de sesión para BarberShop" />
@@ -92,16 +93,19 @@ import BaseHead from '../components/BaseHead.astro';
       </div>
     </form>
   </main>
+  <InstallPrompt />
 </div>
 
 <style>
   /* Dark theme is the default (fallback when the device reports nothing). */
   .page {
+    box-sizing: border-box;
     min-height: 100vh;
+    min-height: 100dvh;
     display: flex;
     align-items: center;
     justify-content: center;
-    padding: 1.5rem 1rem;
+    padding: 1rem;
     font-family: var(--font-atkinson, sans-serif);
     color: #9aa4b8;
     background: #000;
@@ -115,14 +119,14 @@ import BaseHead from '../components/BaseHead.astro';
 
   .brand {
     text-align: center;
-    margin-bottom: 1.5rem;
+    margin-bottom: 1.1rem;
   }
 
   .brand-logo {
     display: block;
-    width: 96px;
-    height: 96px;
-    margin: 0 auto 1rem;
+    width: 80px;
+    height: 80px;
+    margin: 0 auto 0.75rem;
     object-fit: cover;
     border-radius: 50%;
     border: 1px solid rgba(212, 175, 106, 0.55);
@@ -150,7 +154,7 @@ import BaseHead from '../components/BaseHead.astro';
     display: flex;
     flex-direction: row;
     gap: 0.65rem;
-    margin-bottom: 1.15rem;
+    margin-bottom: 0.95rem;
   }
 
   .social-btn {
@@ -166,9 +170,9 @@ import BaseHead from '../components/BaseHead.astro';
     font-family: inherit;
     font-size: 0.95rem;
     font-weight: 600;
-    color: #eef1f6;
-    background: #0e1526;
-    border: 1px solid rgba(154, 164, 184, 0.32);
+    color: #171717;
+    background: #ffffff;
+    border: 1px solid #ffffff;
     border-radius: 10px;
     cursor: not-allowed;
     opacity: 0.85;
@@ -179,14 +183,14 @@ import BaseHead from '../components/BaseHead.astro';
   }
 
   .social-btn:not(:disabled):hover {
-    border-color: rgba(212, 175, 106, 0.4);
+    background: #e8e8e8;
   }
 
   .divider {
     display: flex;
     align-items: center;
     gap: 0.75rem;
-    margin-bottom: 1.15rem;
+    margin-bottom: 0.95rem;
     color: #5d6579;
     font-size: 0.85rem;
     text-transform: uppercase;
@@ -202,7 +206,7 @@ import BaseHead from '../components/BaseHead.astro';
   }
 
   .field {
-    margin-bottom: 1.15rem;
+    margin-bottom: 0.95rem;
   }
 
   .field label {
@@ -221,8 +225,8 @@ import BaseHead from '../components/BaseHead.astro';
     font-family: inherit;
     font-size: 1rem;
     color: #eef1f6;
-    background: #0e1526;
-    border: 1px solid rgba(154, 164, 184, 0.32);
+    background: #141414;
+    border: 1px solid #333333;
     border-radius: 10px;
     transition:
       border-color 0.18s ease,
@@ -234,7 +238,7 @@ import BaseHead from '../components/BaseHead.astro';
   }
 
   .field input:hover {
-    border-color: rgba(212, 175, 106, 0.4);
+    border-color: #555555;
   }
 
   .field input:focus-visible {
@@ -248,7 +252,7 @@ import BaseHead from '../components/BaseHead.astro';
     align-items: center;
     justify-content: space-between;
     gap: 0.75rem;
-    margin-bottom: 1.1rem;
+    margin-bottom: 0.9rem;
     font-size: 0.9rem;
   }
 
@@ -330,7 +334,7 @@ import BaseHead from '../components/BaseHead.astro';
     align-items: center;
     justify-content: center;
     gap: 0.5rem;
-    margin-top: 1.1rem;
+    margin-top: 0.9rem;
     font-size: 0.95rem;
     color: #9aa4b8;
   }
@@ -398,9 +402,9 @@ import BaseHead from '../components/BaseHead.astro';
     }
 
     .social-btn {
-      color: #171b26;
-      background: #f7f8fa;
-      border-color: rgba(23, 27, 38, 0.18);
+      color: #171717;
+      background: #ffffff;
+      border-color: #d4d4d8;
     }
 
     .divider {
@@ -414,12 +418,12 @@ import BaseHead from '../components/BaseHead.astro';
 
     .field input {
       color: #171b26;
-      background: #f7f8fa;
-      border-color: rgba(23, 27, 38, 0.18);
+      background: #f4f4f5;
+      border-color: #d4d4d8;
     }
 
     .field input:hover {
-      border-color: rgba(138, 106, 47, 0.5);
+      border-color: #a1a1aa;
     }
 
     .field input:focus-visible {
