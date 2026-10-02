@@ -427,6 +427,53 @@ import InstallPrompt from '../components/InstallPrompt.astro';
     }
   }
 
+  /* Never scroll: discrete zoom steps for very short viewports (landscape phones,
+     small windows). Compact content ranges 533–558px by width; each tier's worst
+     measured content fits from its min covered height up to the next boundary.
+     ponytail: media queries can't compute a fit — steps cover down to ~189px tall,
+     below that the window is unusable and scrolling is the graceful fallback. */
+  @media (max-height: 557px) {
+    .login-card {
+      zoom: 0.88; /* fits >= 484px */
+    }
+  }
+
+  @media (max-height: 483px) {
+    .login-card {
+      zoom: 0.78; /* fits >= 433px */
+    }
+  }
+
+  @media (max-height: 432px) {
+    .login-card {
+      zoom: 0.68; /* fits >= 384px */
+    }
+  }
+
+  @media (max-height: 383px) {
+    .login-card {
+      zoom: 0.58; /* fits >= 329px */
+    }
+  }
+
+  @media (max-height: 328px) {
+    .login-card {
+      zoom: 0.48; /* fits >= 280px */
+    }
+  }
+
+  @media (max-height: 279px) {
+    .login-card {
+      zoom: 0.38; /* fits >= 231px */
+    }
+  }
+
+  @media (max-height: 230px) {
+    .login-card {
+      zoom: 0.3; /* fits >= 189px */
+    }
+  }
+
   @media (prefers-reduced-motion: reduce) {
     .field input,
     .submit,

@@ -73,8 +73,11 @@ test.describe('Login Page', () => {
 
   test('no scroll on short viewports', async ({ page }) => {
     for (const viewport of [
+      { width: 320, height: 480 }, // tiny phone
       { width: 320, height: 568 }, // iPhone SE 1st gen
       { width: 360, height: 640 }, // small Android
+      { width: 640, height: 360 }, // landscape phone
+      { width: 1920, height: 500 }, // short desktop window
     ]) {
       await page.setViewportSize(viewport);
       await page.goto('/Webbyss/login');
