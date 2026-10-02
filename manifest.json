@@ -1,6 +1,6 @@
 {
-  "name": "BarberShop PWA",
-  "short_name": "BarberShop",
+  "name": "Webby's BarberShop",
+  "short_name": "Webby's BarberShop",
   "description": "PWA para la barbería",
   "start_url": "/Webbyss/login",
   "display": "standalone",
