@@ -6,7 +6,7 @@ import { defineConfig, fontProviders } from 'astro/config';
 
 // https://astro.build/config
 export default defineConfig({
-	site: 'https://example.com',
+	site: 'https://phyton06.github.io/Webbyss',
 	integrations: [mdx(), sitemap()],
 	fonts: [
 		{
