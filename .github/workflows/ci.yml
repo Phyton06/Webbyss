@@ -35,5 +35,5 @@ jobs:
       - name: Upload build artifacts
         uses: actions/upload-artifact@v4
         with:
-          name:astro-build-${{ github.sha }}
+          name: astro-build-${{ github.sha }}
           path: dist/
