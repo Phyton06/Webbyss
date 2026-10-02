@@ -1,24 +1,57 @@
 ---
 // Custom install prompt shown when beforeinstallprompt fires.
-// Injected only on pages that render it (login = app entry point).
+// On iOS Safari (no beforeinstallprompt) it shows elegant "Add to Home Screen" instructions instead.
 const logo = `${import.meta.env.BASE_URL}/assets/logo-192.png`;
 ---
 
 <aside class="install" id="install-prompt" aria-live="polite" hidden>
   <img src={logo} alt="" class="install-logo" width="44" height="44" />
-  <div class="install-copy">
-    <strong>Instalar BarberShop</strong>
-    <span>Añade la app a tu pantalla de inicio</span>
+  <div class="install-body">
+    <div class="install-copy">
+      <strong id="install-title">Instalar Webby's BarberShop</strong>
+      <span id="install-sub">Añade la app a tu pantalla de inicio</span>
+    </div>
+    <!-- iOS variant: shown when the platform can't prompt natively -->
+    <ol class="install-steps" id="install-steps" hidden>
+      <li>
+        <svg class="share-icon" viewBox="0 0 24 24" width="16" height="16" aria-hidden="true"
+          ><path
+            fill="none"
+            stroke="currentColor"
+            stroke-width="2"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+            d="M12 3v12M8 7l4-4 4 4M5 12v7a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2v-7"></path></svg
+        >
+        Toca <strong>Compartir</strong>
+      </li>
+      <li>
+        <svg class="share-icon" viewBox="0 0 24 24" width="16" height="16" aria-hidden="true"
+          ><path
+            fill="none"
+            stroke="currentColor"
+            stroke-width="2"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+            d="M12 16V4M8 8l4-4 4 4M5 14v5a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2v-5"></path></svg
+        >
+        Elige <strong>Añadir a pantalla de inicio</strong>
+      </li>
+    </ol>
   </div>
   <div class="install-actions">
-    <button type="button" class="install-yes">Instalar</button>
-    <button type="button" class="install-no">Ahora no</button>
+    <button type="button" class="install-yes" id="install-yes">Instalar</button>
+    <button type="button" class="install-no" id="install-no">Ahora no</button>
   </div>
 </aside>
 
 <script>
   const BASE = import.meta.env.BASE_URL;
   const el = document.getElementById('install-prompt')!;
+  const yesBtn = document.getElementById('install-yes')!;
+  const noBtn = document.getElementById('install-no')!;
+  const steps = document.getElementById('install-steps')!;
+  const sub = document.getElementById('install-sub')!;
   const DISMISS_KEY = 'bp-install-dismissed-at';
   const DISMISS_COOLDOWN = 7 * 24 * 60 * 60 * 1000; // re-ask after 7 days
 
@@ -27,47 +60,64 @@ const logo = `${import.meta.env.BASE_URL}/assets/logo-192.png`;
     navigator.serviceWorker.register(`${BASE}/sw.js`).catch(() => {});
   }
 
-  let deferred: BeforeInstallPromptEvent | null = null;
-
   interface BeforeInstallPromptEvent extends Event {
     prompt: () => Promise<void>;
     userChoice: Promise<{ outcome: 'accepted' | 'dismissed' }>;
   }
 
+  let deferred: BeforeInstallPromptEvent | null = null;
   const dismissedAt = Number(localStorage.getItem(DISMISS_KEY) || 0);
+  const canDismiss = () => Date.now() - dismissedAt >= DISMISS_COOLDOWN;
 
-  function maybeShow() {
-    if (!deferred) return;
-    if (Date.now() - dismissedAt < DISMISS_COOLDOWN) return;
-    setTimeout(() => {
-      if (deferred) el.hidden = false;
-    }, 1200);
+  // Already installed? never prompt.
+  const isStandalone =
+    window.matchMedia('(display-mode: standalone)').matches ||
+    (navigator as Navigator & { standalone?: boolean }).standalone === true;
+
+  function show() {
+    el.hidden = false;
   }
 
-  window.addEventListener('beforeinstallprompt', (e) => {
-    e.preventDefault();
-    deferred = e as BeforeInstallPromptEvent;
-    maybeShow();
-  });
-
-  window.addEventListener('appinstalled', () => {
-    el.hidden = true;
-    deferred = null;
-    localStorage.setItem(DISMISS_KEY, String(Date.now()));
-  });
-
-  el.querySelector('.install-yes')!.addEventListener('click', async () => {
-    if (!deferred) return;
-    el.hidden = true;
-    await deferred.prompt();
-    await deferred.userChoice; // outcome irrelevant: prompt only fires once per session
-    deferred = null;
-  });
-
-  el.querySelector('.install-no')!.addEventListener('click', () => {
+  function dismiss() {
     el.hidden = true;
     localStorage.setItem(DISMISS_KEY, String(Date.now()));
-  });
+  }
+
+  // iOS/iPadOS Safari: no beforeinstallprompt — show instructions instead.
+  const isIOS =
+    /iP(hone|ad|od)/.test(navigator.userAgent) ||
+    (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+
+  if (isIOS && !isStandalone && canDismiss()) {
+    steps.hidden = false;
+    sub.hidden = true; // instructions replace the generic subtitle
+    yesBtn.hidden = true; // no native prompt to trigger
+    noBtn.textContent = 'Entendido';
+    noBtn.addEventListener('click', () => el.hidden = true); // acknowledge only, don't burn cooldown
+    setTimeout(show, 1200);
+  } else if (!isIOS) {
+    window.addEventListener('beforeinstallprompt', (e) => {
+      e.preventDefault();
+      deferred = e as BeforeInstallPromptEvent;
+      if (!isStandalone && canDismiss()) setTimeout(show, 1200);
+    });
+
+    window.addEventListener('appinstalled', () => {
+      el.hidden = true;
+      deferred = null;
+      localStorage.setItem(DISMISS_KEY, String(Date.now()));
+    });
+
+    yesBtn.addEventListener('click', async () => {
+      if (!deferred) return;
+      el.hidden = true;
+      await deferred.prompt();
+      await deferred.userChoice; // outcome irrelevant: prompt only fires once per session
+      deferred = null;
+    });
+
+    noBtn.addEventListener('click', dismiss);
+  }
 </script>
 
 <style>
@@ -81,7 +131,7 @@ const logo = `${import.meta.env.BASE_URL}/assets/logo-192.png`;
     align-items: center;
     gap: 0.85rem;
     box-sizing: border-box;
-    width: min(440px, calc(100vw - 2rem));
+    width: min(460px, calc(100vw - 2rem));
     padding: 0.9rem 1rem;
     background: #0a0a0a;
     border: 1px solid rgba(212, 175, 106, 0.45);
@@ -98,6 +148,14 @@ const logo = `${import.meta.env.BASE_URL}/assets/logo-192.png`;
   .install-logo {
     flex-shrink: 0;
     border-radius: 50%;
+  }
+
+  .install-body {
+    display: flex;
+    flex-direction: column;
+    gap: 0.4rem;
+    min-width: 0;
+    flex: 1;
   }
 
   .install-copy {
@@ -117,10 +175,41 @@ const logo = `${import.meta.env.BASE_URL}/assets/logo-192.png`;
     font-size: 0.8rem;
   }
 
+  .install-steps {
+    margin: 0;
+    padding: 0;
+    list-style: none;
+    display: flex;
+    flex-direction: column;
+    gap: 0.3rem;
+  }
+
+  .install-steps[hidden] {
+    display: none;
+  }
+
+  .install-steps li {
+    display: flex;
+    align-items: center;
+    gap: 0.45rem;
+    color: #9aa4b8;
+    font-size: 0.8rem;
+  }
+
+  .install-steps strong {
+    color: #e5c489;
+    font-weight: 700;
+  }
+
+  .share-icon {
+    flex-shrink: 0;
+    color: #d4af6a;
+  }
+
   .install-actions {
     display: flex;
     gap: 0.5rem;
-    margin-left: auto;
+    flex-shrink: 0;
   }
 
   .install-yes,
@@ -135,6 +224,11 @@ const logo = `${import.meta.env.BASE_URL}/assets/logo-192.png`;
     transition:
       background 0.18s ease,
       border-color 0.18s ease;
+  }
+
+  .install-yes[hidden],
+  .install-no[hidden] {
+    display: none;
   }
 
   .install-yes {
@@ -181,7 +275,6 @@ const logo = `${import.meta.env.BASE_URL}/assets/logo-192.png`;
     }
 
     .install-actions {
-      margin-left: 0;
       width: 100%;
     }
 
@@ -208,8 +301,17 @@ const logo = `${import.meta.env.BASE_URL}/assets/logo-192.png`;
       color: #171b26;
     }
 
-    .install-copy span {
+    .install-copy span,
+    .install-steps li {
       color: #5d6579;
+    }
+
+    .install-steps strong {
+      color: #6f5524;
+    }
+
+    .share-icon {
+      color: #8a6a2f;
     }
 
     .install-yes {

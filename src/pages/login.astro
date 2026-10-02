@@ -3,20 +3,23 @@ import BaseHead from '../components/BaseHead.astro';
 import InstallPrompt from '../components/InstallPrompt.astro';
 ---
 
-<BaseHead title="BarberShop Login" description="Inicio de sesión para BarberShop" />
+<BaseHead
+  title="Webby's BarberShop Login"
+  description="Inicio de sesión para Webby's BarberShop"
+/>
 
 <div class="page">
   <main class="login-card">
     <header class="brand">
       <img
         src={`${import.meta.env.BASE_URL}/assets/logo.jpeg`}
-        alt="BarberShop"
+        alt="Webby's BarberShop"
         class="brand-logo"
         width="96"
         height="96"
         loading="eager"
       />
-      <h1>BarberShop</h1>
+      <h1><span class="brand-pre">Webby's</span> BarberShop</h1>
       <p class="tagline">Bienvenido de nuevo</p>
     </header>
 
@@ -137,10 +140,21 @@ import InstallPrompt from '../components/InstallPrompt.astro';
 
   h1 {
     margin: 0 0 0.35rem;
-    font-size: 1.75rem;
-    line-height: 1.2;
-    letter-spacing: 0.02em;
+    font-family: var(--font-display, sans-serif);
+    font-weight: 400;
+    font-size: clamp(2.6rem, 9vw, 3.4rem);
+    line-height: 0.95;
+    text-transform: uppercase;
+    letter-spacing: 0.03em;
     color: #f2f4f8;
+  }
+
+  .brand-pre {
+    display: block;
+    font-size: 0.36em;
+    letter-spacing: 0.42em;
+    margin-bottom: 0.45rem;
+    color: #d4af6a;
   }
 
   .tagline {

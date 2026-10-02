@@ -9,11 +9,11 @@ test.describe('Login Page', () => {
     await page.goto('/Webbyss/login');
 
     // Verify hero section
-    await expect(page.locator('h1')).toHaveText('BarberShop');
+    await expect(page.locator('h1')).toHaveText("Webby's BarberShop");
     await expect(page.locator('p')).toContainText('Bienvenido de nuevo');
 
     // Verify logo is present (resilient locator, no hardcoded src)
-    await expect(page.locator('img[alt="BarberShop"]')).toBeVisible();
+    await expect(page.locator(`img[alt="Webby's BarberShop"]`)).toBeVisible();
 
     // Verify the scoped stylesheet actually applied (catches "unstyled page" regressions)
     await expect(page.locator('.page')).toHaveCSS('background-color', PAGE_BG);

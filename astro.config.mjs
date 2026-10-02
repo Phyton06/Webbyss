@@ -12,6 +12,22 @@ export default defineConfig({
 	fonts: [
 		{
 			provider: fontProviders.local(),
+			name: 'Display',
+			cssVariable: '--font-display',
+			fallbacks: ['Impact', 'sans-serif'],
+			options: {
+				variants: [
+					{
+						src: ['./src/assets/fonts/bebas-neue.woff2'],
+						weight: 400,
+						style: 'normal',
+						display: 'swap',
+					},
+				],
+			},
+		},
+		{
+			provider: fontProviders.local(),
 			name: 'Atkinson',
 			cssVariable: '--font-atkinson',
 			fallbacks: ['sans-serif'],
