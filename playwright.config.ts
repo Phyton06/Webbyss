@@ -5,6 +5,8 @@ export default defineConfig({
   use: {
     baseURL: 'http://localhost:4321',
     headless: true,
+    // Assert against the default (dark) theme; the light theme has its own test.
+    colorScheme: 'dark',
   },
   webServer: {
     command: 'npm run preview -- --port 4321',

@@ -70,4 +70,17 @@ test.describe('Login Page', () => {
     const emailInput = page.locator('input[type="email"]');
     await expect(emailInput).toHaveCSS('border-color', FOCUS_BORDER);
   });
+
+  test('light theme follows device color scheme', async ({ page }) => {
+    await page.emulateMedia({ colorScheme: 'light' });
+    await page.goto('/Webbyss/login');
+
+    // Light palette: white card instead of the dark #131a2b
+    await expect(page.locator('.login-card')).toHaveCSS('background-color', 'rgb(255, 255, 255)');
+    // Darkened gold for AA contrast on white
+    await expect(page.locator('button[type="submit"]')).toHaveCSS(
+      'background-color',
+      'rgb(138, 106, 47)',
+    );
+  });
 });

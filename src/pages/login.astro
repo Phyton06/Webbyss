@@ -19,6 +19,38 @@ import BaseHead from '../components/BaseHead.astro';
       <p class="tagline">Bienvenido de nuevo</p>
     </header>
 
+    <!-- ponytail: social buttons are decorative — Supabase auth planned for later, no backend yet -->
+    <div class="social">
+      <button type="button" class="social-btn" disabled>
+        <svg viewBox="0 0 18 18" width="18" height="18" aria-hidden="true"
+          ><path
+            fill="#4285F4"
+            d="M17.64 9.2c0-.64-.06-1.25-.16-1.84H9v3.48h4.84a4.14 4.14 0 0 1-1.8 2.72v2.26h2.92c1.7-1.57 2.68-3.88 2.68-6.62z"
+          ></path><path
+            fill="#34A853"
+            d="M9 18c2.43 0 4.47-.8 5.96-2.18l-2.92-2.26c-.8.54-1.84.86-3.04.86-2.34 0-4.32-1.58-5.03-3.7H.96v2.33A9 9 0 0 0 9 18z"
+          ></path><path
+            fill="#FBBC05"
+            d="M3.97 10.72A5.41 5.41 0 0 1 3.69 9c0-.6.1-1.18.28-1.72V4.95H.96A9 9 0 0 0 0 9c0 1.45.35 2.82.96 4.05l3.01-2.33z"
+          ></path><path
+            fill="#EA4335"
+            d="M9 3.58c1.32 0 2.5.45 3.44 1.35l2.58-2.58C13.46.89 11.43 0 9 0A9 9 0 0 0 .96 4.95l3.01 2.33C4.68 5.16 6.66 3.58 9 3.58z"
+          ></path></svg
+        >
+        Continuar con Google
+      </button>
+      <button type="button" class="social-btn" disabled>
+        <svg viewBox="0 0 24 24" width="18" height="18" fill="#1877F2" aria-hidden="true"
+          ><path
+            d="M24 12.07C24 5.4 18.63 0 12 0S0 5.4 0 12.07C0 18.1 4.39 23.1 10.13 24v-8.44H7.08v-3.49h3.05V9.41c0-3.02 1.79-4.69 4.53-4.69 1.31 0 2.68.24 2.68.24v2.97h-1.51c-1.49 0-1.96.93-1.96 1.89v2.25h3.33l-.53 3.49h-2.8V24C19.61 23.1 24 18.1 24 12.07z"
+          ></path></svg
+        >
+        Continuar con Facebook
+      </button>
+    </div>
+
+    <div class="divider" role="separator"><span>o</span></div>
+
     <form class="login-form">
       <div class="field">
         <label for="email">Correo electrónico</label>
@@ -42,6 +74,15 @@ import BaseHead from '../components/BaseHead.astro';
         />
       </div>
 
+      <div class="form-row">
+        <label class="remember">
+          <input type="checkbox" id="remember" />
+          <span>Recordarme</span>
+        </label>
+        <!-- ponytail: no reset flow exists yet — dead link until backend -->
+        <a href="#" class="forgot">¿Olvidaste tu contraseña?</a>
+      </div>
+
       <button type="submit" class="submit">Iniciar sesión</button>
 
       <div class="alt">
@@ -54,6 +95,7 @@ import BaseHead from '../components/BaseHead.astro';
 </div>
 
 <style>
+  /* Dark theme is the default (fallback when the device reports nothing). */
   .page {
     min-height: 100vh;
     display: flex;
@@ -82,7 +124,7 @@ import BaseHead from '../components/BaseHead.astro';
 
   .brand {
     text-align: center;
-    margin-bottom: 1.75rem;
+    margin-bottom: 1.5rem;
   }
 
   .brand-logo {
@@ -111,6 +153,59 @@ import BaseHead from '../components/BaseHead.astro';
     font-size: 0.95rem;
     letter-spacing: 0.08em;
     color: #9aa4b8;
+  }
+
+  .social {
+    display: flex;
+    flex-direction: column;
+    gap: 0.65rem;
+    margin-bottom: 1.15rem;
+  }
+
+  .social-btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.6rem;
+    box-sizing: border-box;
+    width: 100%;
+    padding: 0.75rem 1rem;
+    font-family: inherit;
+    font-size: 0.95rem;
+    font-weight: 600;
+    color: #eef1f6;
+    background: #0e1526;
+    border: 1px solid rgba(154, 164, 184, 0.32);
+    border-radius: 10px;
+    cursor: not-allowed;
+    opacity: 0.85;
+  }
+
+  .social-btn:disabled {
+    cursor: not-allowed;
+  }
+
+  .social-btn:not(:disabled):hover {
+    border-color: rgba(212, 175, 106, 0.4);
+  }
+
+  .divider {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    margin-bottom: 1.15rem;
+    color: #5d6579;
+    font-size: 0.85rem;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+  }
+
+  .divider::before,
+  .divider::after {
+    content: '';
+    flex: 1;
+    height: 1px;
+    background: rgba(154, 164, 184, 0.25);
   }
 
   .field {
@@ -153,6 +248,49 @@ import BaseHead from '../components/BaseHead.astro';
     outline: none;
     border-color: #d4af6a;
     box-shadow: 0 0 0 3px rgba(212, 175, 106, 0.22);
+  }
+
+  .form-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.75rem;
+    margin-bottom: 1.1rem;
+    font-size: 0.9rem;
+  }
+
+  .remember {
+    display: flex;
+    align-items: center;
+    gap: 0.45rem;
+    cursor: pointer;
+  }
+
+  .remember input {
+    width: 1rem;
+    height: 1rem;
+    accent-color: #d4af6a;
+  }
+
+  .forgot {
+    color: #d4af6a;
+    text-decoration: none;
+    border-bottom: 1px solid rgba(212, 175, 106, 0.45);
+    padding-bottom: 1px;
+    transition:
+      color 0.18s ease,
+      border-color 0.18s ease;
+  }
+
+  .forgot:hover {
+    color: #e5c489;
+    border-color: #e5c489;
+  }
+
+  .forgot:focus-visible {
+    outline: 2px solid #d4af6a;
+    outline-offset: 3px;
+    border-radius: 2px;
   }
 
   .submit {
@@ -238,12 +376,123 @@ import BaseHead from '../components/BaseHead.astro';
   @media (prefers-reduced-motion: reduce) {
     .field input,
     .submit,
+    .forgot,
     .alt a {
       transition: none;
     }
 
     .submit:hover {
       transform: none;
+    }
+  }
+
+  /* Light theme when the device reports light mode. Gold darkened for AA contrast on white. */
+  @media (prefers-color-scheme: light) {
+    .page {
+      color: #5d6579;
+      background:
+        radial-gradient(1100px 520px at 50% -12%, rgba(180, 145, 74, 0.14), transparent 62%),
+        radial-gradient(900px 520px at 50% 112%, rgba(70, 100, 170, 0.08), transparent 65%),
+        #f4f5f7;
+    }
+
+    .login-card {
+      background: #ffffff;
+      border-color: rgba(138, 106, 47, 0.28);
+      box-shadow:
+        0 24px 48px rgba(23, 27, 38, 0.12),
+        inset 0 1px 0 rgba(255, 255, 255, 0.8);
+    }
+
+    .brand-logo {
+      border-color: rgba(138, 106, 47, 0.55);
+      box-shadow:
+        0 0 0 4px rgba(138, 106, 47, 0.12),
+        0 12px 26px rgba(23, 27, 38, 0.18);
+    }
+
+    h1 {
+      color: #171b26;
+    }
+
+    .tagline,
+    .field label,
+    .alt {
+      color: #5d6579;
+    }
+
+    .social-btn {
+      color: #171b26;
+      background: #f7f8fa;
+      border-color: rgba(23, 27, 38, 0.18);
+    }
+
+    .divider {
+      color: #828ca3;
+    }
+
+    .divider::before,
+    .divider::after {
+      background: rgba(23, 27, 38, 0.14);
+    }
+
+    .field input {
+      color: #171b26;
+      background: #f7f8fa;
+      border-color: rgba(23, 27, 38, 0.18);
+    }
+
+    .field input:hover {
+      border-color: rgba(138, 106, 47, 0.5);
+    }
+
+    .field input:focus-visible {
+      border-color: #8a6a2f;
+      box-shadow: 0 0 0 3px rgba(138, 106, 47, 0.22);
+    }
+
+    .remember input {
+      accent-color: #8a6a2f;
+    }
+
+    .forgot {
+      color: #8a6a2f;
+      border-bottom-color: rgba(138, 106, 47, 0.45);
+    }
+
+    .forgot:hover {
+      color: #6f5524;
+      border-color: #6f5524;
+    }
+
+    .submit {
+      color: #ffffff;
+      background: #8a6a2f;
+      border-color: #8a6a2f;
+    }
+
+    .submit:hover {
+      background: #6f5524;
+      border-color: #6f5524;
+      box-shadow: 0 12px 24px rgba(138, 106, 47, 0.3);
+    }
+
+    .submit:focus-visible {
+      outline-color: #8a6a2f;
+    }
+
+    .alt-sep {
+      color: #828ca3;
+    }
+
+    .alt a {
+      color: #8a6a2f;
+      border-bottom-color: rgba(138, 106, 47, 0.45);
+    }
+
+    .alt a:hover {
+      color: #6f5524;
+      border-color: #6f5524;
     }
   }
 </style>
