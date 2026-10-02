@@ -14,12 +14,12 @@ export default defineConfig({
 			provider: fontProviders.local(),
 			name: 'Display',
 			cssVariable: '--font-display',
-			fallbacks: ['Impact', 'sans-serif'],
+			fallbacks: ['Georgia', 'serif'],
 			options: {
 				variants: [
 					{
-						src: ['./src/assets/fonts/bebas-neue.woff2'],
-						weight: 400,
+						src: ['./src/assets/fonts/playfair-display-700.woff2'],
+						weight: 700,
 						style: 'normal',
 						display: 'swap',
 					},
