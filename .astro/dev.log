@@ -1,0 +1,126 @@
+{"message":"connected.","label":"vite","level":"info"}
+{"message":"Generated 1ms","label":"types","level":"info"}
+{"message":"connected.","label":"vite","level":"info"}
+{"message":"Syncing content","label":"content","level":"info"}
+{"message":"Synced content","label":"content","level":"info"}
+{"message":" astro  v7.3.5 ready in 856 ms\n┃ Local    http://localhost:4321/\n┃ Network  use --host to expose","label":"SKIP_FORMAT","level":"info"}
+{"message":"watching for file changes...","label":null,"level":"info"}
+{"message":"[CompilerError] Expected a semicolon or an implicit semicolon after a statement, but found none (The stacktrace appears to be already rewritten by something else, but was passed to vite.ssrFixStacktrace. This may cause incorrect stacktraces.)\n  Hint:\n    Try inserting a semicolon here\n  Stack trace:\n    at /home/pyton06/Webbys2/subsequent-disk/src/pages/login.astro:2:13\n    [...] See full stack trace in the browser, or rerun with --verbose.","label":null,"level":"error"}
+{"message":"[200] / 21ms","label":null,"level":"info"}
+{"message":"[CompilerError] Expected a semicolon or an implicit semicolon after a statement, but found none (The stacktrace appears to be already rewritten by something else, but was passed to vite.ssrFixStacktrace. This may cause incorrect stacktraces.)\n  Hint:\n    Try inserting a semicolon here\n  Stack trace:\n    at /home/pyton06/Webbys2/subsequent-disk/src/pages/login.astro:2:17\n    [...] See full stack trace in the browser, or rerun with --verbose.","label":null,"level":"error"}
+{"message":"[200] /login 8ms","label":null,"level":"info"}
+{"message":"[200] / 4ms","label":null,"level":"info"}
+{"message":"Configuration file updated. Restarting...","label":null,"level":"info"}
+{"message":"connected.","label":"vite","level":"info"}
+{"message":"connected.","label":"vite","level":"info"}
+{"message":"Re-optimizing dependencies because lockfile has changed","label":"vite","level":"info"}
+{"message":"server restarted.","label":"vite","level":"info"}
+{"message":"[200] /login 18ms","label":null,"level":"info"}
+{"message":"[200] /login 3ms","label":null,"level":"info"}
+{"message":"[200] /login 2ms","label":null,"level":"info"}
+{"message":"[200] /login 2ms","label":null,"level":"info"}
+{"message":"[200] /login 3ms","label":null,"level":"info"}
+{"message":"[200] /login 2ms","label":null,"level":"info"}
+{"message":"[200] /login 2ms","label":null,"level":"info"}
+{"message":"[200] /login 2ms","label":null,"level":"info"}
+{"message":"Configuration file updated. Restarting...","label":null,"level":"info"}
+{"message":"connected.","label":"vite","level":"info"}
+{"message":"connected.","label":"vite","level":"info"}
+{"message":"Re-optimizing dependencies because vite config has changed","label":"vite","level":"info"}
+{"message":"server restarted.","label":"vite","level":"info"}
+{"message":"Configuration file removed. Restarting...","label":null,"level":"info"}
+{"message":"Missing pages directory: src/pages","label":null,"level":"warn"}
+{"message":"Missing pages directory: src/pages","label":null,"level":"warn"}
+{"message":"Missing pages directory: src/pages","label":null,"level":"warn"}
+{"message":"Missing pages directory: src/pages","label":null,"level":"warn"}
+{"message":"Missing pages directory: src/pages","label":null,"level":"warn"}
+{"message":"Missing pages directory: src/pages","label":null,"level":"warn"}
+{"message":"Missing pages directory: src/pages","label":null,"level":"warn"}
+{"message":"The font file \"/home/pyton06/Webbys2/subsequent-disk/src/assets/fonts/atkinson-bold.woff\" referenced in your config has been deleted. Restore the file or remove this font from your configuration if it is no longer needed.","label":"assets","level":"warn"}
+{"message":"Missing pages directory: src/pages","label":null,"level":"warn"}
+{"message":"The font file \"/home/pyton06/Webbys2/subsequent-disk/src/assets/fonts/atkinson-regular.woff\" referenced in your config has been deleted. Restore the file or remove this font from your configuration if it is no longer needed.","label":"assets","level":"warn"}
+{"message":"Missing pages directory: src/pages","label":null,"level":"warn"}
+{"message":"Missing pages directory: src/pages","label":null,"level":"warn"}
+{"message":"Missing pages directory: src/pages","label":null,"level":"warn"}
+{"message":"Missing pages directory: src/pages","label":null,"level":"warn"}
+{"message":"Missing pages directory: src/pages","label":null,"level":"warn"}
+{"message":"Missing pages directory: src/pages","label":null,"level":"warn"}
+{"message":"Missing pages directory: src/pages","label":null,"level":"warn"}
+{"message":"Missing pages directory: src/pages","label":null,"level":"warn"}
+{"message":"Missing pages directory: src/pages","label":null,"level":"warn"}
+{"message":"Missing pages directory: src/pages","label":null,"level":"warn"}
+{"message":"Missing pages directory: src/pages","label":null,"level":"warn"}
+{"message":"Missing pages directory: src/pages","label":null,"level":"warn"}
+{"message":"Missing pages directory: src/pages","label":null,"level":"warn"}
+{"message":"Missing pages directory: src/pages","label":null,"level":"warn"}
+{"message":"Missing pages directory: src/pages","label":null,"level":"warn"}
+{"message":"Missing pages directory: src/pages","label":null,"level":"warn"}
+{"message":"Missing pages directory: src/pages","label":null,"level":"warn"}
+{"message":"Missing pages directory: src/pages","label":null,"level":"warn"}
+{"message":"Missing pages directory: src/pages","label":null,"level":"warn"}
+{"message":"Missing pages directory: src/pages","label":null,"level":"warn"}
+{"message":"changed tsconfig file detected: /home/pyton06/Webbys2/subsequent-disk/tsconfig.json - Clearing cache and forcing full-reload to ensure TypeScript is compiled with updated config values.","label":"vite","level":"info"}
+{"message":"program reload","label":"vite","level":"info"}
+{"message":"program reload","label":"vite","level":"info"}
+{"message":"Missing pages directory: src/pages","label":null,"level":"warn"}
+{"message":"An error happened during full reload\nFailed to load url /home/pyton06/Webbys2/subsequent-disk/src/content.config.ts (resolved id: /home/pyton06/Webbys2/subsequent-disk/src/content.config.ts). Does the file exist?\nError: Failed to load url /home/pyton06/Webbys2/subsequent-disk/src/content.config.ts (resolved id: /home/pyton06/Webbys2/subsequent-disk/src/content.config.ts). Does the file exist?\n    at loadAndTransform (file:///home/pyton06/Webbys2/subsequent-disk/node_modules/vite/dist/node/chunks/node.js:19977:31)\n    at async fetchModule (file:///home/pyton06/Webbys2/subsequent-disk/node_modules/vite/dist/node/chunks/node.js:35939:15)\n    at async handleInvoke (file:///home/pyton06/Webbys2/subsequent-disk/node_modules/vite/dist/node/chunks/node.js:25138:21)\n    at async EventEmitter.listenerForInvokeHandler (file:///home/pyton06/Webbys2/subsequent-disk/node_modules/vite/dist/node/chunks/node.js:25193:13)","label":"vite","level":"error"}
+{"message":"connected.","label":"vite","level":"info"}
+{"message":"connected.","label":"vite","level":"info"}
+{"message":"Re-optimizing dependencies because vite config has changed","label":"vite","level":"info"}
+{"message":"server restarted.","label":"vite","level":"info"}
+{"message":"Configuration file added. Restarting...","label":null,"level":"info"}
+{"message":"changed tsconfig file detected: /home/pyton06/Webbys2/subsequent-disk/tsconfig.json - Clearing cache and forcing full-reload to ensure TypeScript is compiled with updated config values.","label":"vite","level":"info"}
+{"message":"program reload","label":"vite","level":"info"}
+{"message":"connected.","label":"vite","level":"info"}
+{"message":"connected.","label":"vite","level":"info"}
+{"message":"Re-optimizing dependencies because vite config has changed","label":"vite","level":"info"}
+{"message":"server restarted.","label":"vite","level":"info"}
+{"message":"index.html","label":"watch","level":"info"}
+{"message":"about/index.html","label":"watch","level":"info"}
+{"message":"blog/index.html","label":"watch","level":"info"}
+{"message":"login/index.html","label":"watch","level":"info"}
+{"message":"blog/first-post/index.html","label":"watch","level":"info"}
+{"message":"blog/markdown-style-guide/index.html","label":"watch","level":"info"}
+{"message":"blog/second-post/index.html","label":"watch","level":"info"}
+{"message":"blog/using-mdx/index.html","label":"watch","level":"info"}
+{"message":"blog/third-post/index.html","label":"watch","level":"info"}
+{"message":"Configuration file removed. Restarting...","label":null,"level":"info"}
+{"message":"Missing pages directory: src/pages","label":null,"level":"warn"}
+{"message":"Missing pages directory: src/pages","label":null,"level":"warn"}
+{"message":"Missing pages directory: src/pages","label":null,"level":"warn"}
+{"message":"Missing pages directory: src/pages","label":null,"level":"warn"}
+{"message":"Missing pages directory: src/pages","label":null,"level":"warn"}
+{"message":"Missing pages directory: src/pages","label":null,"level":"warn"}
+{"message":"Missing pages directory: src/pages","label":null,"level":"warn"}
+{"message":"The font file \"/home/pyton06/Webbys2/subsequent-disk/src/assets/fonts/atkinson-bold.woff\" referenced in your config has been deleted. Restore the file or remove this font from your configuration if it is no longer needed.","label":"assets","level":"warn"}
+{"message":"Missing pages directory: src/pages","label":null,"level":"warn"}
+{"message":"The font file \"/home/pyton06/Webbys2/subsequent-disk/src/assets/fonts/atkinson-regular.woff\" referenced in your config has been deleted. Restore the file or remove this font from your configuration if it is no longer needed.","label":"assets","level":"warn"}
+{"message":"Missing pages directory: src/pages","label":null,"level":"warn"}
+{"message":"Missing pages directory: src/pages","label":null,"level":"warn"}
+{"message":"Missing pages directory: src/pages","label":null,"level":"warn"}
+{"message":"Missing pages directory: src/pages","label":null,"level":"warn"}
+{"message":"Missing pages directory: src/pages","label":null,"level":"warn"}
+{"message":"Missing pages directory: src/pages","label":null,"level":"warn"}
+{"message":"Missing pages directory: src/pages","label":null,"level":"warn"}
+{"message":"Missing pages directory: src/pages","label":null,"level":"warn"}
+{"message":"Missing pages directory: src/pages","label":null,"level":"warn"}
+{"message":"Missing pages directory: src/pages","label":null,"level":"warn"}
+{"message":"Missing pages directory: src/pages","label":null,"level":"warn"}
+{"message":"Missing pages directory: src/pages","label":null,"level":"warn"}
+{"message":"Missing pages directory: src/pages","label":null,"level":"warn"}
+{"message":"Missing pages directory: src/pages","label":null,"level":"warn"}
+{"message":"Missing pages directory: src/pages","label":null,"level":"warn"}
+{"message":"Missing pages directory: src/pages","label":null,"level":"warn"}
+{"message":"Missing pages directory: src/pages","label":null,"level":"warn"}
+{"message":"Missing pages directory: src/pages","label":null,"level":"warn"}
+{"message":"Missing pages directory: src/pages","label":null,"level":"warn"}
+{"message":"Missing pages directory: src/pages","label":null,"level":"warn"}
+{"message":"changed tsconfig file detected: /home/pyton06/Webbys2/subsequent-disk/tsconfig.json - Clearing cache and forcing full-reload to ensure TypeScript is compiled with updated config values.","label":"vite","level":"info"}
+{"message":"program reload","label":"vite","level":"info"}
+{"message":"program reload","label":"vite","level":"info"}
+{"message":"Missing pages directory: src/pages","label":null,"level":"warn"}
+{"message":"An error happened during full reload\nFailed to load url /home/pyton06/Webbys2/subsequent-disk/src/content.config.ts (resolved id: /home/pyton06/Webbys2/subsequent-disk/src/content.config.ts). Does the file exist?\nError: Failed to load url /home/pyton06/Webbys2/subsequent-disk/src/content.config.ts (resolved id: /home/pyton06/Webbys2/subsequent-disk/src/content.config.ts). Does the file exist?\n    at loadAndTransform (file:///home/pyton06/Webbys2/subsequent-disk/node_modules/vite/dist/node/chunks/node.js:19977:31)\n    at async fetchModule (file:///home/pyton06/Webbys2/subsequent-disk/node_modules/vite/dist/node/chunks/node.js:35939:15)\n    at async handleInvoke (file:///home/pyton06/Webbys2/subsequent-disk/node_modules/vite/dist/node/chunks/node.js:25138:21)\n    at async EventEmitter.listenerForInvokeHandler (file:///home/pyton06/Webbys2/subsequent-disk/node_modules/vite/dist/node/chunks/node.js:25193:13)","label":"vite","level":"error"}
+{"message":"connected.","label":"vite","level":"info"}
+{"message":"connected.","label":"vite","level":"info"}
+{"message":"Re-optimizing dependencies because vite config has changed","label":"vite","level":"info"}
+{"message":"server restarted.","label":"vite","level":"info"}
