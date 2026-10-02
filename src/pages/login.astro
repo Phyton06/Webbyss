@@ -4,63 +4,246 @@ import BaseHead from '../components/BaseHead.astro';
 
 <BaseHead title="BarberShop Login" description="Inicio de sesión para BarberShop" />
 
-<div class="min-h-screen bg-gray-900 flex items-center justify-center p-4">
-
-  <div class="login-card bg-gray-800 rounded-xl w-full max-w-md p-8 shadow-2xl">
-
-    <div class="text-center mb-8">
+<div class="page">
+  <main class="login-card">
+    <header class="brand">
       <img
-        src="/assets/logo.jpeg"
+        src={`${import.meta.env.BASE_URL}/assets/logo.jpeg`}
         alt="BarberShop"
-        class="w-20 h-20 mx-auto mb-4"
-        width="80"
-        height="80"
-        loading="lazy"
+        class="brand-logo"
+        width="96"
+        height="96"
+        loading="eager"
       />
-      <h1 class="text-2xl font-bold text-white mb-2">BarberShop</h1>
-      <p class="text-gray-400">Bienvenido de nuevo</p>
-    </div>
+      <h1>BarberShop</h1>
+      <p class="tagline">Bienvenido de nuevo</p>
+    </header>
 
-    <form class="space-y-4">
-      <div>
-        <label for="email" class="block text-sm text-gray-300 mb-2">Correo electrónico</label>
+    <form class="login-form">
+      <div class="field">
+        <label for="email">Correo electrónico</label>
         <input
           type="email"
           id="email"
-          class="w-full px-4 py-3 bg-gray-700 rounded border border-gray-600 focus:outline-none focus:border-accent focus:bg-gray-800 text-white"
           placeholder="ejemplo@barbershop.com"
           required
           autocomplete="email"
         />
       </div>
 
-      <div>
-        <label for="password" class="block text-sm text-gray-300 mb-2">Contraseña</label>
+      <div class="field">
+        <label for="password">Contraseña</label>
         <input
           type="password"
           id="password"
-          class="w-full px-4 py-3 bg-gray-700 rounded border border-gray-600 focus:outline-none focus:border-accent focus:bg-gray-800 text-white"
           placeholder="Tu contraseña"
           required
           autocomplete="current-password"
         />
       </div>
 
-      <div class="flex items-center justify-between text-sm">
-        <button
-          type="submit"
-          class="w-full bg-accent text-gray-900 font-medium py-3 rounded hover:bg-accent-hover transition-colors"
-        >
-          Iniciar sesión
-        </button>
+      <button type="submit" class="submit">Iniciar sesión</button>
 
-        <div class="flex items-center text-gray-500">
-          <span class="mr-2">o</span>
-          <a href="/register" class="font-medium text-accent hover:text-accent-hover">
-            Crear cuenta
-          </a>
-        </div>
+      <div class="alt">
+        <span class="alt-sep">o</span>
+        <!-- ponytail: absolute site-root link, existing project convention; route the site through import.meta.env.BASE_URL if navigation is reworked -->
+        <a href="/register">Crear cuenta</a>
       </div>
     </form>
-  </div>
+  </main>
 </div>
+
+<style>
+  .page {
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 1.5rem 1rem;
+    font-family: var(--font-atkinson, sans-serif);
+    color: #9aa4b8;
+    background:
+      radial-gradient(1100px 520px at 50% -12%, rgba(212, 175, 106, 0.12), transparent 62%),
+      radial-gradient(900px 520px at 50% 112%, rgba(70, 100, 170, 0.1), transparent 65%),
+      #0b0f1a;
+  }
+
+  .login-card {
+    width: 100%;
+    max-width: 420px;
+    padding: 2.5rem 1.75rem 2rem;
+    background: #131a2b;
+    border: 1px solid rgba(212, 175, 106, 0.18);
+    border-radius: 16px;
+    box-shadow:
+      0 28px 60px rgba(0, 0, 0, 0.55),
+      inset 0 1px 0 rgba(255, 255, 255, 0.04);
+  }
+
+  .brand {
+    text-align: center;
+    margin-bottom: 1.75rem;
+  }
+
+  .brand-logo {
+    display: block;
+    width: 96px;
+    height: 96px;
+    margin: 0 auto 1rem;
+    object-fit: cover;
+    border-radius: 50%;
+    border: 1px solid rgba(212, 175, 106, 0.55);
+    box-shadow:
+      0 0 0 4px rgba(212, 175, 106, 0.1),
+      0 12px 26px rgba(0, 0, 0, 0.45);
+  }
+
+  h1 {
+    margin: 0 0 0.35rem;
+    font-size: 1.75rem;
+    line-height: 1.2;
+    letter-spacing: 0.02em;
+    color: #f2f4f8;
+  }
+
+  .tagline {
+    margin: 0;
+    font-size: 0.95rem;
+    letter-spacing: 0.08em;
+    color: #9aa4b8;
+  }
+
+  .field {
+    margin-bottom: 1.15rem;
+  }
+
+  .field label {
+    display: block;
+    margin-bottom: 0.45rem;
+    font-size: 0.8rem;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: #9aa4b8;
+  }
+
+  .field input {
+    box-sizing: border-box;
+    width: 100%;
+    padding: 0.8rem 0.9rem;
+    font-family: inherit;
+    font-size: 1rem;
+    color: #eef1f6;
+    background: #0e1526;
+    border: 1px solid rgba(154, 164, 184, 0.32);
+    border-radius: 10px;
+    transition:
+      border-color 0.18s ease,
+      box-shadow 0.18s ease;
+  }
+
+  .field input::placeholder {
+    color: #828ca3;
+  }
+
+  .field input:hover {
+    border-color: rgba(212, 175, 106, 0.4);
+  }
+
+  .field input:focus-visible {
+    outline: none;
+    border-color: #d4af6a;
+    box-shadow: 0 0 0 3px rgba(212, 175, 106, 0.22);
+  }
+
+  .submit {
+    display: block;
+    box-sizing: border-box;
+    width: 100%;
+    margin-top: 0.4rem;
+    padding: 0.9rem 1rem;
+    font-family: inherit;
+    font-size: 1rem;
+    font-weight: 700;
+    letter-spacing: 0.04em;
+    color: #10131c;
+    background: #d4af6a;
+    border: 1px solid #d4af6a;
+    border-radius: 10px;
+    cursor: pointer;
+    transition:
+      background 0.18s ease,
+      border-color 0.18s ease,
+      transform 0.18s ease,
+      box-shadow 0.18s ease;
+  }
+
+  .submit:hover {
+    background: #e5c489;
+    border-color: #e5c489;
+    transform: translateY(-1px);
+    box-shadow: 0 12px 24px rgba(212, 175, 106, 0.28);
+  }
+
+  .submit:active {
+    transform: translateY(0);
+    box-shadow: none;
+  }
+
+  .submit:focus-visible {
+    outline: 2px solid #e5c489;
+    outline-offset: 3px;
+  }
+
+  .alt {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    margin-top: 1.1rem;
+    font-size: 0.95rem;
+    color: #9aa4b8;
+  }
+
+  .alt-sep {
+    color: #5d6579;
+  }
+
+  .alt a {
+    color: #d4af6a;
+    text-decoration: none;
+    border-bottom: 1px solid rgba(212, 175, 106, 0.45);
+    padding-bottom: 1px;
+    transition:
+      color 0.18s ease,
+      border-color 0.18s ease;
+  }
+
+  .alt a:hover {
+    color: #e5c489;
+    border-color: #e5c489;
+  }
+
+  .alt a:focus-visible {
+    outline: 2px solid #d4af6a;
+    outline-offset: 3px;
+    border-radius: 2px;
+  }
+
+  @media (max-width: 480px) {
+    .login-card {
+      padding: 2rem 1.25rem 1.75rem;
+    }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .field input,
+    .submit,
+    .alt a {
+      transition: none;
+    }
+
+    .submit:hover {
+      transform: none;
+    }
+  }
+</style>

@@ -1,15 +1,22 @@
 import { test, expect } from '@playwright/test';
 
+// Design tokens from src/pages/login.astro scoped styles
+const FOCUS_BORDER = 'rgb(212, 175, 106)'; // gold #d4af6a
+const CARD_BG = 'rgb(19, 26, 43)'; // card #131a2b
+
 test.describe('Login Page', () => {
   test('renders login page correctly', async ({ page }) => {
-    await page.goto('http://localhost:4321/login');
+    await page.goto('/Webbyss/login');
 
     // Verify hero section
     await expect(page.locator('h1')).toHaveText('BarberShop');
     await expect(page.locator('p')).toContainText('Bienvenido de nuevo');
 
-    // Verify logo is present
-    await expect(page.locator('img[src="/assets/logo.jpeg"]')).toBeVisible();
+    // Verify logo is present (resilient locator, no hardcoded src)
+    await expect(page.locator('img[alt="BarberShop"]')).toBeVisible();
+
+    // Verify the scoped stylesheet actually applied (catches "unstyled page" regressions)
+    await expect(page.locator('.login-card')).toHaveCSS('background-color', CARD_BG);
 
     // Verify form fields exist
     await expect(page.locator('input[type="email"]')).toBeVisible();
@@ -34,7 +41,7 @@ test.describe('Login Page', () => {
   });
 
   test('responsive design - mobile viewport', async ({ page }) => {
-    await page.goto('http://localhost:4321/login');
+    await page.goto('/Webbyss/login');
     await page.setViewportSize({ width: 375, height: 667 }); // iPhone SE
 
     // Form should be accessible
@@ -47,7 +54,7 @@ test.describe('Login Page', () => {
   });
 
   test('responsive design - desktop viewport', async ({ page }) => {
-    await page.goto('http://localhost:4321/login');
+    await page.goto('/Webbyss/login');
     await page.setViewportSize({ width: 1440, height: 900 });
 
     // Layout should adjust for larger screens
@@ -56,11 +63,11 @@ test.describe('Login Page', () => {
   });
 
   test('focus-visible states', async ({ page }) => {
-    await page.goto('http://localhost:4321/login');
+    await page.goto('/Webbyss/login');
     await page.focus('input[type="email"]');
 
-    // Should have focus styling after focusing
+    // Custom gold focus ring from the scoped styles
     const emailInput = page.locator('input[type="email"]');
-    await expect(emailInput).toHaveCSS('border-color', 'rgb(118, 118, 118)');
+    await expect(emailInput).toHaveCSS('border-color', FOCUS_BORDER);
   });
 });
