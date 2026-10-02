@@ -378,6 +378,55 @@ import InstallPrompt from '../components/InstallPrompt.astro';
     border-radius: 2px;
   }
 
+  /* Short phones (<=700px tall): compact rhythm so the login never scrolls. */
+  @media (max-height: 700px) {
+    .page {
+      padding: 0.75rem;
+    }
+
+    .brand {
+      margin-bottom: 0.7rem;
+    }
+
+    .brand-logo {
+      width: 56px;
+      height: 56px;
+      margin-bottom: 0.5rem;
+    }
+
+    h1 {
+      font-size: clamp(2rem, 8vw, 2.6rem);
+    }
+
+    .brand-pre {
+      margin-bottom: 0.25rem;
+    }
+
+    .social,
+    .divider,
+    .field,
+    .form-row {
+      margin-bottom: 0.6rem;
+    }
+
+    .social-btn {
+      padding: 0.6rem 1rem;
+    }
+
+    .field input {
+      padding: 0.65rem 0.9rem;
+    }
+
+    .submit {
+      margin-top: 0.2rem;
+      padding: 0.75rem 1rem;
+    }
+
+    .alt {
+      margin-top: 0.6rem;
+    }
+  }
+
   @media (prefers-reduced-motion: reduce) {
     .field input,
     .submit,

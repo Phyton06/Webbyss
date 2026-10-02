@@ -71,6 +71,21 @@ test.describe('Login Page', () => {
     await expect(emailInput).toHaveCSS('border-color', FOCUS_BORDER);
   });
 
+  test('no scroll on short viewports', async ({ page }) => {
+    for (const viewport of [
+      { width: 320, height: 568 }, // iPhone SE 1st gen
+      { width: 360, height: 640 }, // small Android
+    ]) {
+      await page.setViewportSize(viewport);
+      await page.goto('/Webbyss/login');
+
+      const overflows = await page.evaluate(
+        () => document.documentElement.scrollHeight > document.documentElement.clientHeight,
+      );
+      expect(overflows, `scroll on ${viewport.width}x${viewport.height}`).toBe(false);
+    }
+  });
+
   test('light theme follows device color scheme', async ({ page }) => {
     await page.emulateMedia({ colorScheme: 'light' });
     await page.goto('/Webbyss/login');

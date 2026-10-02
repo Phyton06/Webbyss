@@ -1,0 +1,179 @@
+---
+// Typography picker: renders the login's exact logo lockup in each candidate font.
+import BaseHead from '../components/BaseHead.astro';
+
+const base = import.meta.env.BASE_URL;
+
+const candidates = [
+	{ family: 'Bebas Neue', name: 'Bebas Neue', note: 'Condensada clásica', current: true },
+	{ family: 'Anton', name: 'Anton', note: 'Condensada pesada, impacto máximo' },
+	{ family: 'Oswald', name: 'Oswald 600', note: 'Condensada sobria y legible' },
+	{ family: 'Archivo Black', name: 'Archivo Black', note: 'Gruesa geométrica, moderna' },
+	{ family: 'Alfa Slab One', name: 'Alfa Slab One', note: 'Slab retro, aire barbería' },
+	{ family: 'Abril Fatface', name: 'Abril Fatface', note: 'Didone editorial, elegante' },
+	{ family: 'Playfair Display', name: 'Playfair Display 700', note: 'Serif clásica, sofisticada' },
+	{ family: 'Passion One', name: 'Passion One 700', note: 'Redonda y contundente' },
+	{ family: 'Staatliches', name: 'Staatliches', note: 'Rotulada vintage industrial' },
+	{ family: 'Righteous', name: 'Righteous', note: 'Retro redondeada, amigable' },
+	{ family: 'Big Shoulders Display', name: 'Big Shoulders 800', note: 'Condensada urbana' },
+	{ family: 'Bungee', name: 'Bungee', note: 'Señalética, muy llamativa' },
+];
+---
+
+<!doctype html>
+<html lang="es">
+	<head>
+		<BaseHead title="Tipografías — Webby's BarberShop" description="Elegí la tipografía del logo" />
+		<link rel="stylesheet" href={`${base}/fonts.css`} />
+	</head>
+	<body>
+		<main class="wrap">
+			<header>
+				<h1>Tipografías</h1>
+				<p>
+					Cada tarjeta muestra el logo con el <strong>mismo tamaño y estilo</strong> que el login.
+					Decime el nombre de la que te guste y la cambio.
+				</p>
+			</header>
+
+			<ul class="grid">
+				{
+					candidates.map((f) => (
+						<li class="card">
+							<div class="sample" style={`font-family:'${f.family}'`}>
+								<span class="pre">Webby's</span>
+								<span class="main">BarberShop</span>
+							</div>
+							<div class="meta">
+								<strong>{f.name}</strong>
+								{f.current && <span class="badge">ACTUAL</span>}
+								<span class="note">{f.note}</span>
+							</div>
+						</li>
+					))
+				}
+			</ul>
+
+			<footer>
+				<a href={`${base}/login/`}>← Volver al login</a>
+			</footer>
+		</main>
+	</body>
+</html>
+
+<style>
+	:global(body) {
+		margin: 0;
+		background: #000;
+		color: #9aa4b8;
+		font-family: var(--font-atkinson, sans-serif);
+	}
+
+	.wrap {
+		max-width: 760px;
+		margin: 0 auto;
+		padding: 2rem 1rem 3rem;
+	}
+
+	header h1 {
+		margin: 0 0 0.5rem;
+		font-size: clamp(1.8rem, 6vw, 2.4rem);
+		color: #f2f4f8;
+	}
+
+	header p {
+		margin: 0 0 1.75rem;
+		line-height: 1.5;
+	}
+
+	header strong {
+		color: #d4af6a;
+	}
+
+	.grid {
+		list-style: none;
+		margin: 0;
+		padding: 0;
+		display: grid;
+		gap: 1rem;
+		grid-template-columns: 1fr;
+	}
+
+	@media (min-width: 560px) {
+		.grid {
+			grid-template-columns: 1fr 1fr;
+		}
+	}
+
+	.card {
+		border: 1px solid #262626;
+		border-radius: 14px;
+		background: #0a0a0a;
+		padding: 1.4rem 1.25rem 1.1rem;
+	}
+
+	.sample {
+		text-align: center;
+		text-transform: uppercase;
+		line-height: 0.95;
+	}
+
+	.pre {
+		display: block;
+		font-size: 0.36em;
+		letter-spacing: 0.42em;
+		color: #d4af6a;
+		margin-bottom: 0.45rem;
+	}
+
+	.main {
+		display: block;
+		font-size: clamp(2.2rem, 9vw, 3rem);
+		letter-spacing: 0.03em;
+		color: #f2f4f8;
+	}
+
+	.meta {
+		display: flex;
+		align-items: center;
+		gap: 0.5rem;
+		margin-top: 1rem;
+		border-top: 1px solid #1f1f1f;
+		padding-top: 0.75rem;
+		font-size: 0.85rem;
+	}
+
+	.meta strong {
+		color: #f2f4f8;
+	}
+
+	.badge {
+		font-size: 0.65rem;
+		font-weight: 700;
+		letter-spacing: 0.08em;
+		color: #10131c;
+		background: #d4af6a;
+		border-radius: 999px;
+		padding: 0.15rem 0.5rem;
+	}
+
+	.note {
+		color: #5d6579;
+	}
+
+	footer {
+		margin-top: 2rem;
+		text-align: center;
+	}
+
+	footer a {
+		color: #d4af6a;
+		text-decoration: none;
+		border-bottom: 1px solid rgba(212, 175, 106, 0.45);
+		padding-bottom: 1px;
+	}
+
+	footer a:hover {
+		color: #e5c489;
+	}
+</style>
