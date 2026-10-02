@@ -1,0 +1,33 @@
+{
+  "name": "BarberShop PWA",
+  "short_name": "BarberShop",
+  "description": "PWA para la barbería",
+  "start_url": "/login",
+  "display": "standalone",
+  "orientation": "portrait-primary",
+  "theme_color": "#1a1a2e",
+  "background_color": "#1a1a2e",
+  "display_override": ["window-control-overlay"],
+  "icons": [
+    {
+      "src": "/assets/logo.jpeg",
+      "sizes": "192x192",
+      "type": "image/jpeg",
+      "purpose": "any"
+    },
+    {
+      "src": "/assets/logo.jpeg",
+      "sizes": "512x512",
+      "type": "image/jpeg",
+      "purpose": "any"
+    }
+  ],
+  "screenshots": [
+    {
+      "src": "/assets/logo.jpeg",
+      "sizes": "384x512",
+      "type": "image/jpeg",
+      "form_factor": "wide"
+    }
+  ]
+}
