@@ -14,7 +14,8 @@ project can grow into the full product (backend, more pages, team) without resty
 **Constraints**: zero visual change on login (light+dark); no layout/zoom/compact edits;
 no new dependencies, no Tailwind; raw hex ONLY in tokens.css; Spanish UI copy, English comments.
 
-**Forecast**: ~385 authored lines → actual **788** (236 login + 45 global + 203 tokens + 349 gallery).
+**Forecast**: ~385 authored lines → actual **836** (191 login + 45 global + 203 tokens +
+349 gallery + 48 doc).
 **Delivery**: strategy `ask-on-risk` → user chose **`feature-branch-chain`** (2026-10-02) —
 tracker `feat/style-system` + 3 chained child PRs (chosen over `stacked-to-main` because the
 user wants nothing to land on `main` until the chain completes).
@@ -36,9 +37,9 @@ user wants nothing to land on `main` until the chain completes).
 
 | PR | Branch | Base | Contents | Lines |
 |----|--------|------|----------|-------|
-| tracker (draft) | `feat/style-system` | `master` | integration of everything | 788 |
-| 1 | `feat/style-system-01-tokens` | `feat/style-system` | this doc + `tokens.css` + `global.css` | 248+33 |
-| 2 | `feat/style-system-02-login` | `…-01-tokens` | `login.astro` migration | 236 |
+| tracker (draft) | `feat/style-system` | `master` | integration + this doc | 836 |
+| 1 | `feat/style-system-01-tokens` | `feat/style-system` | `tokens.css` + `global.css` | 248 |
+| 2 | `feat/style-system-02-login` | `…-01-tokens` | `login.astro` migration | 191 |
 | 3 | `feat/style-system-03-gallery` | `…-02-login` | `estilos.astro` | 349 |
 
 ## Progress
