@@ -1,0 +1,203 @@
+/* Design tokens — three layers: primitive → semantic → component.
+   The only file in the codebase allowed to contain raw color values.
+   Imported once, by src/styles/global.css. Base (:root) = light scheme;
+   dark redefines SEMANTICS ONLY, mirrored for a future manual toggle. */
+
+/* === PRIMITIVES (layer 1): raw values, never referenced by components === */
+:root {
+	/* Color — base */
+	--color-white: #ffffff;
+	--color-black: #000000;
+
+	/* Color — neutral scale (brand grays, light → dark) */
+	--color-neutral-50: #f4f4f5; /* light field surface */
+	--color-neutral-100: #f2f4f8; /* dark heading text */
+	--color-neutral-150: #eef1f6; /* dark body/field text */
+	--color-neutral-200: #e8e8e8; /* social hover fill */
+	--color-neutral-300: #d4d4d8; /* light borders */
+	--color-neutral-400: #9aa4b8; /* dark muted text */
+	--color-neutral-500: #a1a1aa; /* light field border hover */
+	--color-neutral-550: #828ca3; /* placeholder / light divider text */
+	--color-neutral-600: #5d6579; /* light muted text / dark divider text */
+	--color-neutral-700: #555555; /* dark field border hover */
+	--color-neutral-800: #333333; /* dark field borders */
+	--color-neutral-900: #171b26; /* light ink (text & headings) */
+	--color-neutral-950: #171717; /* social button label */
+	--color-neutral-975: #141414; /* dark field surface */
+	--color-neutral-990: #10131c; /* text on gold (dark scheme) */
+
+	/* Color — gold scale derived from the brand gold (#8a6a2f / #d4af6a) */
+	--color-gold-300: #e5c489; /* hover on dark */
+	--color-gold-400: #d4af6a; /* accent on dark */
+	--color-gold-700: #8a6a2f; /* accent on light (AA on white) */
+	--color-gold-900: #6f5524; /* hover on light */
+
+	/* RGB triplets — fuel for rgba() alpha composites */
+	--rgb-black: 0, 0, 0;
+	--rgb-neutral-100: 242, 244, 248;
+	--rgb-neutral-150: 238, 241, 246;
+	--rgb-neutral-400: 154, 164, 184;
+	--rgb-neutral-600: 93, 101, 121;
+	--rgb-neutral-900: 23, 27, 38;
+	--rgb-gold-400: 212, 175, 106;
+	--rgb-gold-700: 138, 106, 47;
+
+	/* Spacing scale (4px base) */
+	--space-1: 0.25rem;
+	--space-2: 0.5rem;
+	--space-3: 0.75rem;
+	--space-4: 1rem;
+	--space-5: 1.5rem;
+	--space-6: 2rem;
+
+	/* Radii */
+	--radius-sm: 2px;
+	--radius-md: 8px;
+	--radius-lg: 10px;
+
+	/* Shadows (scheme-independent card elevation) */
+	--shadow-card: 0 2px 6px rgba(var(--rgb-neutral-400), 0.25),
+		0 8px 24px rgba(var(--rgb-neutral-400), 0.33),
+		0 16px 32px rgba(var(--rgb-neutral-400), 0.33);
+}
+
+/* === SEMANTICS (layer 2): purpose aliases — light scheme === */
+:root {
+	/* Page */
+	--color-bg: var(--color-white);
+	--color-surface: var(--color-neutral-50);
+	--color-text: var(--color-neutral-900);
+	--color-heading: var(--color-neutral-900);
+	--color-text-muted: var(--color-neutral-600);
+
+	/* Accent (gold) */
+	--color-accent: var(--color-gold-700);
+	--color-accent-hover: var(--color-gold-900);
+	--color-accent-focus: var(--color-gold-700);
+	--color-accent-bright: var(--color-gold-400); /* logo lockup: gold in both schemes */
+	--color-on-accent: var(--color-white);
+
+	/* Accent composites (alpha) */
+	--color-accent-soft: rgba(var(--rgb-gold-700), 0.55); /* logo ring */
+	--color-accent-glow: rgba(var(--rgb-gold-700), 0.12); /* logo halo */
+	--color-accent-ring: rgba(var(--rgb-gold-700), 0.22); /* field focus ring */
+	--color-accent-line: rgba(var(--rgb-gold-700), 0.45); /* underlined links */
+	--color-accent-shadow: rgba(var(--rgb-gold-700), 0.3); /* button hover shadow */
+	--color-divider-line: rgba(var(--rgb-neutral-900), 0.14);
+
+	/* Fields */
+	--color-field: var(--color-neutral-50);
+	--color-field-text: var(--color-neutral-900);
+	--color-field-border: var(--color-neutral-300);
+	--color-field-border-hover: var(--color-neutral-500);
+	--color-field-placeholder: var(--color-neutral-550); /* same in both schemes */
+
+	/* Borders & dividers */
+	--color-border: var(--color-neutral-300);
+	--color-divider-text: var(--color-neutral-550);
+
+	/* Social buttons */
+	--color-social-bg: var(--color-white);
+	--color-social-text: var(--color-neutral-950);
+	--color-social-border: var(--color-neutral-300);
+	--color-social-hover: var(--color-neutral-200);
+
+	/* Focus outlines */
+	--color-focus-ring: var(--color-gold-400); /* forgot/alt outline: gold in both schemes */
+
+	/* Composite shadow that flips with the scheme */
+	--shadow-logo: 0 0 0 4px var(--color-accent-glow),
+		0 12px 26px rgba(var(--rgb-neutral-900), 0.18);
+
+	/* RGB triplet aliases for legacy rgb(var(--x)) consumers */
+	--rgb-heading: var(--rgb-neutral-900);
+	--rgb-text: var(--rgb-neutral-900);
+	--rgb-text-muted: var(--rgb-neutral-600);
+}
+
+/* === COMPONENT (layer 3): per-component aliases over semantics === */
+:root {
+	/* Primary button (login submit, style gallery) */
+	--button-primary-bg: var(--color-accent);
+	--button-primary-fg: var(--color-on-accent);
+	--button-primary-hover-bg: var(--color-accent-hover);
+	--button-primary-focus-outline: var(--color-accent-focus);
+}
+
+/* === DARK (semantics only): system preference === */
+@media (prefers-color-scheme: dark) {
+	:root {
+		--color-bg: var(--color-black);
+		--color-surface: var(--color-neutral-975);
+		--color-text: var(--color-neutral-150);
+		--color-heading: var(--color-neutral-100);
+		--color-text-muted: var(--color-neutral-400);
+
+		--color-accent: var(--color-gold-400);
+		--color-accent-hover: var(--color-gold-300);
+		--color-accent-focus: var(--color-gold-300);
+		--color-on-accent: var(--color-neutral-990);
+
+		--color-accent-soft: rgba(var(--rgb-gold-400), 0.55);
+		--color-accent-glow: rgba(var(--rgb-gold-400), 0.1);
+		--color-accent-ring: rgba(var(--rgb-gold-400), 0.22);
+		--color-accent-line: rgba(var(--rgb-gold-400), 0.45);
+		--color-accent-shadow: rgba(var(--rgb-gold-400), 0.28);
+		--color-divider-line: rgba(var(--rgb-neutral-400), 0.25);
+
+		--color-field: var(--color-neutral-975);
+		--color-field-text: var(--color-neutral-150);
+		--color-field-border: var(--color-neutral-800);
+		--color-field-border-hover: var(--color-neutral-700);
+
+		--color-border: var(--color-neutral-800);
+		--color-divider-text: var(--color-neutral-600);
+
+		--color-social-border: var(--color-white);
+
+		--shadow-logo: 0 0 0 4px var(--color-accent-glow),
+			0 12px 26px rgba(var(--rgb-black), 0.45);
+
+		--rgb-heading: var(--rgb-neutral-100);
+		--rgb-text: var(--rgb-neutral-150);
+		--rgb-text-muted: var(--rgb-neutral-400);
+	}
+}
+
+/* === DARK (semantics only): manual toggle, mirror of the block above === */
+:root[data-theme='dark'] {
+	--color-bg: var(--color-black);
+	--color-surface: var(--color-neutral-975);
+	--color-text: var(--color-neutral-150);
+	--color-heading: var(--color-neutral-100);
+	--color-text-muted: var(--color-neutral-400);
+
+	--color-accent: var(--color-gold-400);
+	--color-accent-hover: var(--color-gold-300);
+	--color-accent-focus: var(--color-gold-300);
+	--color-on-accent: var(--color-neutral-990);
+
+	--color-accent-soft: rgba(var(--rgb-gold-400), 0.55);
+	--color-accent-glow: rgba(var(--rgb-gold-400), 0.1);
+	--color-accent-ring: rgba(var(--rgb-gold-400), 0.22);
+	--color-accent-line: rgba(var(--rgb-gold-400), 0.45);
+	--color-accent-shadow: rgba(var(--rgb-gold-400), 0.28);
+	--color-divider-line: rgba(var(--rgb-neutral-400), 0.25);
+
+	--color-field: var(--color-neutral-975);
+	--color-field-text: var(--color-neutral-150);
+	--color-field-border: var(--color-neutral-800);
+	--color-field-border-hover: var(--color-neutral-700);
+
+	--color-border: var(--color-neutral-800);
+	--color-divider-text: var(--color-neutral-600);
+
+	--color-social-border: var(--color-white);
+
+	--shadow-logo: 0 0 0 4px var(--color-accent-glow),
+		0 12px 26px rgba(var(--rgb-black), 0.45);
+
+	--rgb-heading: var(--rgb-neutral-100);
+	--rgb-text: var(--rgb-neutral-150);
+	--rgb-text-muted: var(--rgb-neutral-400);
+}
