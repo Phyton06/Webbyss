@@ -122,8 +122,9 @@ admin fills form → validate (client) → localStorage (appointment)
 
 ## Delivery
 
-- Branch: `feat/admin-home` (created off `feat/style-system`; rebase onto `master`
-  after the style chain PRs #5 → #4 → #3 → #2 merge).
+- Branch: `feat/admin-home`, based on the style chain tip
+  (`feat/style-system-03-gallery`, which holds `tokens.css`); rebase onto `master`
+  after the style chain PRs #5 → #4 → #3 → #2 merge.
 - Conventional commits, one work-unit per screen + tests.
 - Forecast ~550–650 authored lines → over the 400-line budget → confirm delivery
   strategy (stacked chain vs single PR) at feature-doc creation.
