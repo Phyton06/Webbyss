@@ -87,6 +87,9 @@ import InstallPrompt from '../components/InstallPrompt.astro';
         <a href="#" class="forgot">¿Olvidaste tu contraseña?</a>
       </div>
 
+      <!-- div (not p): keeps page.locator('p') single-match for the render test -->
+      <div class="alert" id="login-error" role="alert" hidden>Credenciales inválidas</div>
+
       <button type="submit" class="submit">Iniciar sesión</button>
 
       <div class="alt">
@@ -95,6 +98,52 @@ import InstallPrompt from '../components/InstallPrompt.astro';
         <a href="/register">Crear cuenta</a>
       </div>
     </form>
+
+    <script is:inline>
+      // ponytail: demo gate only — replace with Supabase auth when backend lands
+      const USERS = {
+        'admin@barber.com': { password: 'admin', role: 'admin' },
+        'barbero@barber.com': { password: 'barbero', role: 'barbero' },
+        'asistente@barber.com': { password: 'asistente', role: 'asistente' },
+        'cliente@barber.com': { password: 'cliente', role: 'cliente' },
+      };
+
+      const panelUrl = '/Webbyss/admin/';
+      // Non-admin landing: home (/Webbyss/) is still a meta-refresh stub back to
+      // login, so members land on About — user-approved destination.
+      const memberUrl = '/Webbyss/about/';
+
+      // Already signed in → skip the form (admin flag alone counts, pre-unification sessions).
+      const existingRole =
+        sessionStorage.getItem('webbys_role') ||
+        (sessionStorage.getItem('webbys_admin') === '1' ? 'admin' : null);
+      if (existingRole) {
+        location.replace(existingRole === 'admin' ? panelUrl : memberUrl);
+      }
+
+      const form = document.querySelector('.login-form');
+      const errorBox = document.getElementById('login-error');
+
+      form.addEventListener('submit', (event) => {
+        event.preventDefault();
+        errorBox.hidden = true;
+
+        const email = document.getElementById('email').value.trim();
+        const password = document.getElementById('password').value;
+        const user = USERS[email];
+
+        if (!user || user.password !== password) {
+          errorBox.hidden = false;
+          return;
+        }
+
+        sessionStorage.setItem('webbys_role', user.role);
+        if (user.role === 'admin') {
+          sessionStorage.setItem('webbys_admin', '1');
+        }
+        location.href = user.role === 'admin' ? panelUrl : memberUrl;
+      });
+    </script>
   </main>
   <InstallPrompt />
 </div>
@@ -300,6 +349,17 @@ import InstallPrompt from '../components/InstallPrompt.astro';
     outline: 2px solid var(--color-focus-ring);
     outline-offset: 3px;
     border-radius: var(--radius-sm);
+  }
+
+  /* Inline error: gold alert (tokens have no danger palette — brand accent reads as "look here"). */
+  .alert {
+    margin: 0 0 0.9rem;
+    padding: var(--space-2) var(--space-3);
+    font-size: 0.9rem;
+    color: var(--color-accent);
+    background: var(--color-accent-glow);
+    border: 1px solid var(--color-accent-line);
+    border-radius: var(--radius-md);
   }
 
   .submit {
