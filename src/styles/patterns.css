@@ -1,0 +1,522 @@
+/* patterns.css — reusable UI patterns. Loaded globally by global.css
+   (right after tokens.css), so any page can drop in the markup contract
+   below and get the exact styling used by the admin agenda.
+
+   ══════════════════════════════════════════════════════════════════
+   DROPDOWNS — Material 3 "exposed dropdown" (admin agenda, Revision 6)
+   ══════════════════════════════════════════════════════════════════
+   Markup contract:
+     <div class="filter">
+       <button class="filter-trigger" aria-expanded="false" aria-controls="…">
+         <span class="filter-name">Label:</span>
+         <span class="filter-value">Selected</span>
+         <span class="filter-caret" aria-hidden="true">▾</span>
+       </button>
+       <div class="filter-panel" role="group" aria-label="…" hidden>
+         <label class="filter-check">
+           <input type="checkbox|radio" …> Option
+         </label>
+       </div>
+     </div>
+
+   Rules:
+   - The panel NEVER sits in flow: .filter is position:relative and
+     .filter-panel is absolute — opening a dropdown must not push any
+     page content down (the panel floats over it, z-index: 30).
+   - Touch targets ≥ 44px (trigger and every option row).
+   - Open state: trigger gets [aria-expanded="true"] → accent border +
+     accent tint; panel fades/slides in and out smoothly (0.2s emphasized
+     easing via transition + @starting-style, reduced-motion aware).
+   - Panel max-height: min(60vh, 320px) with internal scroll.
+   - Behavior (JS): outside tap closes, Escape closes and refocuses the
+     trigger, single-select closes on pick, multi-select never allows
+     zero selections (last option is guarded).
+
+   ══════════════════════════════════════════════════════════════════
+   CALENDAR — month grid (admin agenda, Revision 3)
+   ══════════════════════════════════════════════════════════════════
+   Markup contract:
+     <div class="cal-head">
+       <h2 class="cal-title">octubre 2026</h2>
+       <button class="cal-nav" aria-label="mes anterior|mes siguiente">‹|›</button>
+     </div>
+     <div class="cal-weekdays"><span>L</span>…<span>D</span></div>
+     <div class="cal-grid">            ← buttons .cal-cell[data-key=YYYY-MM-DD]
+       <button class="cal-cell is-today is-selected is-outside">
+         12 <span class="cal-dots"><i class="dot"></i></span>
+       </button>
+     </div>
+
+   Rules:
+   - 7-column grid, Monday-first Spanish weekdays (L M X J V S D),
+     square cells (aspect-ratio: 1).
+   - States: .is-today → accent text + accent-line border;
+     .is-selected → accent tint fill + accent border;
+     .is-outside → dimmed (previous/next month days).
+   - Event days show up to 3 dots (.cal-dots > .dot) in the cell.
+   - Prev/next buttons are 44px, accent on hover, focus-visible ring.
+   - Cells are injected via innerHTML — they are plain global classes
+     (no Astro scoping), same as everything in this file.
+
+   ══════════════════════════════════════════════════════════════════
+   NAVIGATION MOTION — smooth cross-page transitions
+   ══════════════════════════════════════════════════════════════════
+   Rule: @view-transition { navigation: auto } (at the bottom of this
+   file). Every same-origin page change (← Volver → home, login → admin,
+   agenda → home…) cross-fades ~250ms instead of snapping.
+
+   Motion language of this app (keep new UI consistent):
+   - Micro-interactions (dropdown panels): 0.2s, emphasized easing
+     cubic-bezier(0.2, 0, 0, 1) — see .filter-panel.
+   - Page changes: default cross-fade via @view-transition.
+   - Both respect prefers-reduced-motion (see reduced-motion block);
+     unsupported browsers degrade to instant, the pre-existing behavior.
+
+   ══════════════════════════════════════════════════════════════════
+   SEARCH / COMBOBOX — type-ahead picker (nueva cita, Fase 5)
+   ══════════════════════════════════════════════════════════════════
+   Markup contract:
+     <div class="search">                    ← position:relative anchor
+       <label for="…">Buscar cliente</label>
+       <input class="search-input" type="search" …>
+       <div class="search-results" hidden>   ← floats over content
+         <button class="search-item" data-id="…">
+           <span class="search-item-name">Nombre</span>
+           <span class="search-item-phone">+54 9 …</span>
+         </button>
+         …
+         <div class="search-add">            ← ALWAYS the last row (footer)
+           <button class="search-add-btn">¿No lo encuentras? Registralo</button>
+         </div>
+       </div>
+     </div>
+
+   Rules:
+   - .search-results IS a .filter-panel: the position/transition/
+     [hidden]/@starting-style rules are grouped with it above — there is
+     exactly ONE floating-panel motion implementation in this file.
+   - Rows are buttons: Tab moves through them, Enter picks one; Escape
+     closes the panel; focusing the input with an empty query lists every
+     record (partial, case-insensitive otherwise).
+   - Touch target ≥ 44px per row; panel scrolls internally at
+     min(60vh, 320px).
+   - Result rows are injected via innerHTML — like .cal-cell they are
+     plain global classes (no Astro scoping).
+   - The footer button never hosts an inline form: it hands off to the
+     dedicated name/tel view in the wizard (Fase 6). */
+
+/* ─── Calendar ─────────────────────────────────────────────────── */
+
+.cal-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-2);
+  margin-bottom: var(--space-2);
+}
+
+.cal-title {
+  margin: 0;
+  font-family: var(--font-display, serif);
+  font-size: 1.15rem;
+  font-weight: 700;
+  color: var(--color-heading);
+}
+
+.cal-nav {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 44px;
+  height: 44px;
+  padding: 0;
+  font-family: inherit;
+  font-size: 1.4rem;
+  line-height: 1;
+  color: var(--color-text-muted);
+  background: var(--color-bg);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-lg);
+  cursor: pointer;
+  transition:
+    color 0.18s ease,
+    border-color 0.18s ease;
+}
+
+.cal-nav:hover {
+  color: var(--color-accent);
+  border-color: var(--color-accent);
+}
+
+.cal-nav:focus-visible {
+  outline: 2px solid var(--color-focus-ring);
+  outline-offset: 2px;
+}
+
+.cal-weekdays,
+.cal-grid {
+  display: grid;
+  grid-template-columns: repeat(7, minmax(0, 1fr));
+  gap: var(--space-1);
+}
+
+.cal-weekdays {
+  margin-bottom: var(--space-1);
+}
+
+.cal-weekdays span {
+  padding: var(--space-1) 0;
+  font-size: 0.68rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-align: center;
+  color: var(--color-text-muted);
+}
+
+.cal-cell {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 3px;
+  aspect-ratio: 1;
+  padding: 0;
+  font-family: inherit;
+  font-size: 0.85rem;
+  color: var(--color-text);
+  background: var(--color-bg);
+  border: 1px solid transparent;
+  border-radius: var(--radius-lg);
+  cursor: pointer;
+}
+
+.cal-cell.is-today {
+  color: var(--color-accent);
+  font-weight: 700;
+  border-color: var(--color-accent-line);
+}
+
+.cal-cell.is-selected {
+  background: color-mix(in srgb, var(--color-accent) 12%, transparent);
+  border-color: var(--color-accent);
+}
+
+.cal-cell.is-outside {
+  color: var(--color-text-muted);
+  opacity: 0.4;
+}
+
+.cal-cell:focus-visible {
+  outline: 2px solid var(--color-focus-ring);
+  outline-offset: 2px;
+}
+
+.cal-dots {
+  display: flex;
+  gap: 2px;
+  min-height: 6px;
+}
+
+.cal-cell .dot {
+  width: 6px;
+  height: 6px;
+}
+
+/* ─── Dropdowns (M3 exposed dropdown) ──────────────────────────── */
+
+.filters {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+  margin: 0 0 var(--space-4);
+}
+
+.filter {
+  position: relative; /* anchor: the panel floats below, never in flow */
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  min-width: 0;
+}
+
+.filter-trigger {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  box-sizing: border-box;
+  width: 100%;
+  min-height: 44px;
+  padding: 0.5rem 0.85rem;
+  font-family: inherit;
+  font-size: 0.95rem;
+  font-weight: 700;
+  color: var(--color-text);
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-lg);
+  cursor: pointer;
+  transition:
+    border-color 0.18s ease,
+    background 0.18s ease;
+}
+
+.filter-trigger[aria-expanded='true'] {
+  border-color: var(--color-accent);
+  background: color-mix(in srgb, var(--color-accent) 8%, transparent);
+}
+
+.filter-trigger:focus-visible {
+  outline: 2px solid var(--color-focus-ring);
+  outline-offset: 2px;
+}
+
+.filter-name {
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--color-text-muted);
+}
+
+.filter-value {
+  margin-left: auto;
+  color: var(--color-accent);
+}
+
+.filter-caret {
+  color: var(--color-text-muted);
+}
+
+/* Floating panel — ONE motion implementation shared by the dropdown
+   (.filter-panel) and the search results (.search-results): same position,
+   same 0.2s emphasized transition, same [hidden] exit, same enter values. */
+.filter-panel,
+.search-results {
+  /* M3 exposed-dropdown: floating surface over the page content */
+  position: absolute;
+  top: calc(100% + 6px);
+  left: 0;
+  right: 0;
+  z-index: 30;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+  padding: var(--space-2);
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-lg);
+  box-shadow: 0 12px 28px color-mix(in srgb, var(--color-text) 14%, transparent);
+  max-height: min(60vh, 320px);
+  overflow-y: auto;
+  /* Smooth open AND close: [hidden] toggles display, allow-discrete keeps
+     the display transition alive so the panel can animate out too, and
+     @starting-style supplies the enter start values. M3 emphasized easing. */
+  opacity: 1;
+  transform: translateY(0);
+  transition:
+    opacity 0.2s cubic-bezier(0.2, 0, 0, 1),
+    transform 0.2s cubic-bezier(0.2, 0, 0, 1),
+    display 0.2s allow-discrete;
+}
+
+@starting-style {
+  .filter-panel,
+  .search-results {
+    opacity: 0;
+    transform: translateY(-6px);
+  }
+}
+
+.filter-panel[hidden],
+.search-results[hidden] {
+  display: none;
+  opacity: 0;
+  transform: translateY(-6px);
+}
+
+.filter-check {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  box-sizing: border-box;
+  min-height: 44px;
+  padding: 0 var(--space-2);
+  font-size: 0.95rem;
+  color: var(--color-text);
+  cursor: pointer;
+  border-radius: var(--radius-lg);
+}
+
+.filter-check:hover {
+  background: color-mix(in srgb, var(--color-accent) 8%, transparent);
+}
+
+.filter-check input {
+  width: 18px;
+  height: 18px;
+  margin: 0;
+  accent-color: var(--color-accent);
+  cursor: pointer;
+}
+
+.filter-check input:focus-visible {
+  outline: 2px solid var(--color-focus-ring);
+  outline-offset: 2px;
+}
+
+/* Shared dot: dropdown option bullets + calendar event dots. */
+.dot {
+  display: inline-block;
+  flex: 0 0 auto;
+  width: 9px;
+  height: 9px;
+  border-radius: 50%;
+}
+
+/* ─── Search (type-ahead combobox, Fase 5) ────────────────────── */
+
+.search {
+  position: relative; /* anchor: the results panel floats below */
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+}
+
+.search-input {
+  box-sizing: border-box;
+  width: 100%;
+  min-height: 44px;
+  padding: 0.75rem 0.9rem;
+  font-family: inherit;
+  font-size: 1rem;
+  color: var(--color-field-text);
+  background: var(--color-field);
+  border: 1px solid var(--color-field-border);
+  border-radius: var(--radius-lg);
+  transition:
+    border-color 0.18s ease,
+    box-shadow 0.18s ease;
+}
+
+.search-input:focus-visible {
+  outline: none;
+  border-color: var(--color-accent);
+  box-shadow: 0 0 0 3px var(--color-accent-ring);
+}
+
+/* display:contents keeps the injected rows direct flex children of the
+   scrolling .search-results panel, so its gap applies to every row. */
+.search-rows {
+  display: contents;
+}
+
+.search-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-3);
+  box-sizing: border-box;
+  width: 100%;
+  min-height: 44px;
+  padding: 0 var(--space-2);
+  font-family: inherit;
+  font-size: 0.95rem;
+  text-align: left;
+  color: var(--color-text);
+  background: transparent;
+  border: 0;
+  border-radius: var(--radius-lg);
+  cursor: pointer;
+  transition: background 0.18s ease;
+}
+
+.search-item:hover {
+  background: color-mix(in srgb, var(--color-accent) 8%, transparent);
+}
+
+.search-item:focus-visible {
+  outline: 2px solid var(--color-focus-ring);
+  outline-offset: -2px;
+}
+
+.search-item-name {
+  font-weight: 700;
+  overflow-wrap: anywhere;
+}
+
+.search-item-phone {
+  flex: 0 0 auto;
+  font-size: 0.85rem;
+  color: var(--color-text-muted);
+  white-space: nowrap;
+}
+
+.search-add {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  padding-top: var(--space-2);
+  border-top: 1px solid var(--color-border);
+}
+
+.search-add-btn {
+  display: flex;
+  align-items: center;
+  box-sizing: border-box;
+  width: 100%;
+  min-height: 44px;
+  padding: 0 var(--space-2);
+  font-family: inherit;
+  font-size: 0.95rem;
+  font-weight: 700;
+  text-align: left;
+  color: var(--color-accent);
+  background: transparent;
+  border: 0;
+  border-radius: var(--radius-lg);
+  cursor: pointer;
+  transition: background 0.18s ease;
+}
+
+.search-add-btn:hover {
+  background: color-mix(in srgb, var(--color-accent) 8%, transparent);
+}
+
+.search-add-btn:focus-visible {
+  outline: 2px solid var(--color-focus-ring);
+  outline-offset: -2px;
+}
+
+/* ─── Responsive + motion ──────────────────────────────────────── */
+
+@media (min-width: 720px) {
+  .filters {
+    flex-direction: row;
+    align-items: flex-start;
+  }
+
+  .filter {
+    flex: 1 1 0;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .cal-nav,
+  .filter-trigger,
+  .search-input,
+  .search-item,
+  .search-add-btn {
+    transition: none;
+  }
+
+  .filter-panel,
+  .search-results {
+    transition: none;
+  }
+}
+
+/* ─── Navigation (smooth cross-page) ───────────────────────────── */
+
+@view-transition {
+  navigation: auto;
+}

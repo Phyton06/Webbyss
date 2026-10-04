@@ -32,6 +32,12 @@
 	--color-gold-700: #8a6a2f; /* accent on light (AA on white) */
 	--color-gold-900: #6f5524; /* hover on light */
 
+	/* Color — barber identity (agenda legend, blocks, month dots).
+	   Three mid-tone hues distinct from the gold accent; scheme-independent. */
+	--color-barber-carlos: #2e7f8f; /* teal */
+	--color-barber-diego: #7d5aa6; /* plum */
+	--color-barber-miguel: #6a8a3c; /* olive */
+
 	/* RGB triplets — fuel for rgba() alpha composites */
 	--rgb-black: 0, 0, 0;
 	--rgb-neutral-100: 242, 244, 248;
