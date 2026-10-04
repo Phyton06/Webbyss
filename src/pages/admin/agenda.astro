@@ -1,0 +1,728 @@
+---
+import BaseHead from '../../components/BaseHead.astro';
+
+const base = import.meta.env.BASE_URL;
+---
+
+<!doctype html>
+<html lang="es">
+  <head>
+    <BaseHead
+      title="Agenda — Admin | Webby's BarberShop"
+      description="Agenda completa de Webby's BarberShop"
+    />
+  </head>
+  <body>
+    <div class="page">
+      <div class="shell">
+        <header class="topbar">
+          <a class="back" href="/Webbyss/admin/">← Volver</a>
+          <span class="brand">
+            <img
+              src={`${base}/assets/logo.jpeg`}
+              alt="Webby's BarberShop"
+              class="brand-logo"
+              width="36"
+              height="36"
+            />
+            <span class="brand-name">Webby's</span>
+          </span>
+        </header>
+
+        <h1 class="title">Agenda</h1>
+
+        <section class="calendar" aria-label="Calendario del mes">
+          <div class="cal-head">
+            <button type="button" class="cal-nav" id="cal-prev" aria-label="Mes anterior">‹</button>
+            <h2 class="cal-title" id="cal-title"></h2>
+            <button type="button" class="cal-nav" id="cal-next" aria-label="Mes siguiente">›</button>
+          </div>
+          <div class="cal-weekdays" aria-hidden="true">
+            <span>L</span><span>M</span><span>X</span><span>J</span><span>V</span><span>S</span
+            ><span>D</span>
+          </div>
+          <div class="cal-grid" id="cal-grid"></div>
+        </section>
+
+        <div class="filters">
+          <div class="filter" id="barber-filter">
+            <button
+              type="button"
+              class="filter-trigger"
+              id="barber-trigger"
+              aria-expanded="false"
+              aria-controls="barber-panel"
+            >
+              <span class="filter-name">Barberos:</span>
+              <span class="filter-value" id="barber-value">Todos</span>
+              <span class="filter-caret" aria-hidden="true">▾</span>
+            </button>
+            <div class="filter-panel" id="barber-panel" role="group" aria-label="Barberos" hidden>
+              <label class="filter-check">
+                <input type="checkbox" data-barber="Todos" checked />
+                Todos
+              </label>
+              <label class="filter-check">
+                <input type="checkbox" data-barber="Carlos" checked />
+                <span class="dot" style="background: var(--color-barber-carlos)"></span>
+                Carlos
+              </label>
+              <label class="filter-check">
+                <input type="checkbox" data-barber="Diego" checked />
+                <span class="dot" style="background: var(--color-barber-diego)"></span>
+                Diego
+              </label>
+              <label class="filter-check">
+                <input type="checkbox" data-barber="Miguel" checked />
+                <span class="dot" style="background: var(--color-barber-miguel)"></span>
+                Miguel
+              </label>
+            </div>
+          </div>
+
+          <div class="filter" id="status-filter">
+            <button
+              type="button"
+              class="filter-trigger"
+              id="status-trigger"
+              aria-expanded="false"
+              aria-controls="status-panel"
+            >
+              <span class="filter-name">Estado:</span>
+              <span class="filter-value" id="status-value">Todos</span>
+              <span class="filter-caret" aria-hidden="true">▾</span>
+            </button>
+            <div class="filter-panel" id="status-panel" role="group" aria-label="Estado" hidden>
+              <label class="filter-check">
+                <input type="radio" name="estado" value="Todos" checked />
+                Todos
+              </label>
+              <label class="filter-check">
+                <input type="radio" name="estado" value="Pendiente" />
+                Pendiente
+              </label>
+              <label class="filter-check">
+                <input type="radio" name="estado" value="Confirmada" />
+                Confirmada
+              </label>
+              <label class="filter-check">
+                <input type="radio" name="estado" value="Atendido" />
+                Atendido
+              </label>
+              <label class="filter-check">
+                <input type="radio" name="estado" value="Cancelado" />
+                Cancelado
+              </label>
+              <label class="filter-check">
+                <input type="radio" name="estado" value="Disponible" />
+                Disponible
+              </label>
+            </div>
+          </div>
+        </div>
+
+        <section class="day-agenda" aria-label="Agenda del día">
+          <p class="view-date" id="view-date"></p>
+          <div id="day-body"></div>
+        </section>
+      </div>
+    </div>
+
+    <script is:inline>
+      if (sessionStorage.getItem('webbys_admin') !== '1') {
+        location.replace('/Webbyss/login');
+      }
+    </script>
+
+    <script>
+      import {
+        loadAppointments,
+        dayKey,
+        todayKey,
+        parseKey,
+        hhmm,
+        BARBERS,
+        BARBER_TOKEN,
+        OPEN_HOUR,
+        CLOSE_HOUR,
+        escapeHtml,
+        statusClass,
+      } from '../../scripts/appointments.js';
+
+      const MONTHS = [
+        'Enero',
+        'Febrero',
+        'Marzo',
+        'Abril',
+        'Mayo',
+        'Junio',
+        'Julio',
+        'Agosto',
+        'Septiembre',
+        'Octubre',
+        'Noviembre',
+        'Diciembre',
+      ];
+
+      const appointments = loadAppointments();
+      const state = {
+        date: todayKey(),
+        barbers: new Set(BARBERS),
+        status: 'Todos', // 'Todos' | status | 'Disponible' (Revision 4 delta 1b)
+      };
+
+      const OPEN_MIN = OPEN_HOUR * 60;
+      const CLOSE_MIN = CLOSE_HOUR * 60;
+
+      const pad2 = (value) => String(value).padStart(2, '0');
+      const timeLabel = (minutes) =>
+        `${pad2(Math.floor(minutes / 60))}:${pad2(minutes % 60)}`;
+      const toMinutes = (time) =>
+        Number(time.slice(0, 2)) * 60 + Number(time.slice(3, 5));
+
+      const byDate = (key) =>
+        appointments
+          .filter((appointment) => appointment.date === key)
+          .sort((a, b) => a.time.localeCompare(b.time));
+
+      const barberColor = (barber) =>
+        BARBER_TOKEN[barber] || 'var(--color-text-muted)';
+
+      function labelFor(key) {
+        const date = parseKey(key);
+        return date.toLocaleDateString('es-AR', {
+          weekday: 'long',
+          day: 'numeric',
+          month: 'long',
+        });
+      }
+
+      function statusPill(appointment) {
+        return `<span class="pill ${statusClass(appointment.status)}">${escapeHtml(appointment.status)}</span>`;
+      }
+
+      // --- Month calendar (Monday-first, Spanish headers L M X J V S D) ---
+      function renderCalendar() {
+        const selected = parseKey(state.date);
+        const year = selected.getFullYear();
+        const month = selected.getMonth();
+        const today = todayKey();
+
+        document.getElementById('cal-title').textContent = `${MONTHS[month]} ${year}`;
+
+        const firstWeekday = new Date(year, month, 1).getDay(); // 0 = domingo
+        const offset = (firstWeekday + 6) % 7; // lunes primero
+        const daysInMonth = new Date(year, month + 1, 0).getDate();
+        const prevMonthDays = new Date(year, month, 0).getDate();
+        const totalCells = Math.ceil((offset + daysInMonth) / 7) * 7;
+
+        const cells = [];
+        for (let index = 0; index < totalCells; index++) {
+          const dayNumber = index - offset + 1;
+          let date;
+          let outside = false;
+          if (dayNumber < 1) {
+            date = new Date(year, month - 1, prevMonthDays + dayNumber);
+            outside = true;
+          } else if (dayNumber > daysInMonth) {
+            date = new Date(year, month + 1, dayNumber - daysInMonth);
+            outside = true;
+          } else {
+            date = new Date(year, month, dayNumber);
+          }
+          cells.push({ date, outside });
+        }
+
+        document.getElementById('cal-grid').innerHTML = cells
+          .map(({ date, outside }) => {
+            const key = dayKey(date);
+            const dots = BARBERS.filter((barber) =>
+              byDate(key).some((appointment) => appointment.barber === barber),
+            )
+              .map(
+                (barber) =>
+                  `<span class="dot" style="background: ${barberColor(barber)}"></span>`,
+              )
+              .join('');
+            return `
+            <button
+              type="button"
+              class="cal-cell${outside ? ' is-outside' : ''}${key === today ? ' is-today' : ''}${key === state.date ? ' is-selected' : ''}"
+              data-key="${key}"
+              aria-label="${escapeHtml(labelFor(key))}"
+              aria-pressed="${key === state.date}"${key === today ? ' aria-current="date"' : ''}
+            >
+              <span class="cal-day">${date.getDate()}</span>
+              <span class="cal-dots">${dots}</span>
+            </button>`;
+          })
+          .join('');
+      }
+
+      function shiftMonth(delta) {
+        const current = parseKey(state.date);
+        const target = new Date(
+          current.getFullYear(),
+          current.getMonth() + delta,
+          1,
+        );
+        const lastDay = new Date(
+          target.getFullYear(),
+          target.getMonth() + 1,
+          0,
+        ).getDate();
+        target.setDate(Math.min(current.getDate(), lastDay));
+        state.date = dayKey(target);
+        render();
+      }
+
+      // --- Barberos dropdown checklist (Revision 4 delta 1a) ---
+      const barberTrigger = document.getElementById('barber-trigger');
+      const barberPanel = document.getElementById('barber-panel');
+      const statusTrigger = document.getElementById('status-trigger');
+      const statusPanel = document.getElementById('status-panel');
+
+      const barberBox = (value) =>
+        barberPanel.querySelector(`input[data-barber="${value}"]`);
+
+      const checkedBarbers = () =>
+        BARBERS.filter((barber) => barberBox(barber).checked);
+
+      // Label rule: `Todos` iff all 3, else first name (+ n when more than one).
+      function syncBarberControls() {
+        const checked = checkedBarbers();
+        const all = checked.length === BARBERS.length;
+        barberBox('Todos').checked = all;
+        document.getElementById('barber-value').textContent = all
+          ? 'Todos'
+          : `${checked[0]}${checked.length > 1 ? ` + ${checked.length - 1}` : ''}`;
+      }
+
+      barberPanel.addEventListener('change', (event) => {
+        const input = event.target.closest('input[data-barber]');
+        if (!input) return;
+
+        if (input.dataset.barber === 'Todos') {
+          if (input.checked) {
+            BARBERS.forEach((barber) => (barberBox(barber).checked = true));
+          } else {
+            // nunca a cero: deseleccionar Todos vaciaría el set → se queda.
+            input.checked = true;
+          }
+        } else if (!input.checked && checkedBarbers().length === 0) {
+          // nunca a cero: el último barbero marcado se queda marcado.
+          input.checked = true;
+        }
+
+        syncBarberControls();
+        state.barbers = new Set(checkedBarbers());
+        renderDay();
+      });
+
+      barberTrigger.addEventListener('click', () => {
+        const open = barberTrigger.getAttribute('aria-expanded') === 'true';
+        barberTrigger.setAttribute('aria-expanded', String(!open));
+        barberPanel.hidden = open;
+      });
+
+      // --- Estado single-select dropdown (Revision 5: custom panel replaces
+      // the native <select>, whose open popup is OS-rendered and unthemeable) ---
+      statusTrigger.addEventListener('click', () => {
+        const open = statusTrigger.getAttribute('aria-expanded') === 'true';
+        statusTrigger.setAttribute('aria-expanded', String(!open));
+        statusPanel.hidden = open;
+      });
+
+      statusPanel.addEventListener('change', (event) => {
+        const input = event.target.closest('input[name="estado"]');
+        if (!input) return;
+        state.status = input.value;
+        document.getElementById('status-value').textContent = input.value;
+        // single-select UX: pick closes the panel
+        closePanel(statusTrigger, statusPanel);
+        renderDay();
+      });
+
+      // --- M3 menu dismissal (Revision 6): outside tap + Escape close ---
+      function closePanel(trigger, panel) {
+        panel.hidden = true;
+        trigger.setAttribute('aria-expanded', 'false');
+      }
+
+      document.addEventListener('click', (event) => {
+        if (!(event.target instanceof Element)) return;
+        for (const [trigger, panel] of [
+          [barberTrigger, barberPanel],
+          [statusTrigger, statusPanel],
+        ]) {
+          if (!panel.hidden && !panel.contains(event.target) && !trigger.contains(event.target)) {
+            closePanel(trigger, panel);
+          }
+        }
+      });
+
+      document.addEventListener('keydown', (event) => {
+        if (event.key !== 'Escape') return;
+        for (const [trigger, panel] of [
+          [barberTrigger, barberPanel],
+          [statusTrigger, statusPanel],
+        ]) {
+          if (!panel.hidden) {
+            closePanel(trigger, panel);
+            trigger.focus();
+          }
+        }
+      });
+
+      // --- Day agenda (30-min timeline, 09:00–19:00) ---
+      function blockHtml(appointment) {
+        return `<div class="day-block" style="border-left-color: ${barberColor(appointment.barber)}">
+            <span class="day-block-time">${escapeHtml(appointment.time)}</span>
+            <strong>${escapeHtml(appointment.client)}</strong>
+            <span class="day-block-meta">${appointment.service ? `${escapeHtml(appointment.service)} · ` : ''}${escapeHtml(appointment.barber)}</span>
+            ${appointment.status ? statusPill(appointment) : ''}
+          </div>`;
+      }
+
+      function timelineHtml(items) {
+        const isToday = state.date === todayKey();
+        const now = hhmm();
+        const nowMinutes = toMinutes(now);
+        const nowLine = '<div class="now-line"><span>ahora</span></div>';
+
+        const rows = [];
+        for (let start = OPEN_MIN; start < CLOSE_MIN; start += 30) {
+          const label = timeLabel(start);
+          const inSlot = items.filter(
+            (appointment) =>
+              toMinutes(appointment.time) >= start &&
+              toMinutes(appointment.time) < start + 30,
+          );
+          const holdsNow = isToday && nowMinutes >= start && nowMinutes < start + 30;
+
+          let blocks = '';
+          if (holdsNow) {
+            const passed = inSlot.filter(
+              (appointment) => appointment.time < now,
+            );
+            const ahead = inSlot.filter(
+              (appointment) => appointment.time >= now,
+            );
+            blocks =
+              passed.map(blockHtml).join('') +
+              nowLine +
+              ahead.map(blockHtml).join('');
+          } else {
+            blocks = inSlot.map(blockHtml).join('');
+          }
+
+          if (isToday && nowMinutes < OPEN_MIN && start === OPEN_MIN) {
+            blocks = nowLine + blocks;
+          }
+          if (isToday && nowMinutes >= CLOSE_MIN && start === CLOSE_MIN - 30) {
+            blocks += nowLine;
+          }
+
+          rows.push(`
+            <div class="day-row">
+              <span class="day-hour">${label}</span>
+              <div class="day-slots">${blocks}</div>
+            </div>`);
+        }
+
+        return `<div class="timeline">${rows.join('')}</div>`;
+      }
+
+      // --- Disponible: free 30-min slots per active barber, rendered as the
+      // SAME day-block timeline as appointments (unified look, Revision 7) ---
+      function freeSlotItems() {
+        const items = [];
+        const dayAppointments = byDate(state.date);
+        for (const barber of BARBERS.filter((barber) => state.barbers.has(barber))) {
+          const busy = dayAppointments
+            .filter((appointment) => appointment.barber === barber)
+            .map((appointment) => toMinutes(appointment.time));
+          for (let minutes = OPEN_MIN; minutes < CLOSE_MIN; minutes += 30) {
+            if (!busy.some((taken) => taken >= minutes && taken < minutes + 30)) {
+              items.push({
+                time: timeLabel(minutes),
+                client: 'Libre',
+                service: '',
+                barber,
+                status: null,
+              });
+            }
+          }
+        }
+        return items;
+      }
+
+      function renderDay() {
+        document.getElementById('view-date').textContent = labelFor(state.date);
+        const body = document.getElementById('day-body');
+
+        const free = state.status === 'Disponible';
+        const items = free
+          ? freeSlotItems()
+          : byDate(state.date).filter(
+              (appointment) =>
+                state.barbers.has(appointment.barber) &&
+                (state.status === 'Todos' || appointment.status === state.status),
+            );
+
+        const emptyText = free ? 'Sin huecos libres' : 'Sin citas para este día';
+        body.innerHTML =
+          items.length === 0 ? `<p class="empty">${emptyText}</p>` : timelineHtml(items);
+      }
+
+      function render() {
+        renderCalendar();
+        renderDay();
+      }
+
+      // --- Wiring ---
+      document.getElementById('cal-prev').addEventListener('click', () => shiftMonth(-1));
+      document.getElementById('cal-next').addEventListener('click', () => shiftMonth(1));
+
+      document.getElementById('cal-grid').addEventListener('click', (event) => {
+        const cell = event.target.closest('[data-key]');
+        if (!cell) return;
+        const key = cell.dataset.key;
+        state.date = key;
+        render();
+        // el render reemplaza las celdas: devolvemos el foco (teclado).
+        document.querySelector(`#cal-grid [data-key="${key}"]`)?.focus();
+      });
+
+      render();
+    </script>
+  </body>
+</html>
+
+<style>
+  .page {
+    box-sizing: border-box;
+    min-height: 100vh;
+    min-height: 100dvh;
+    padding: var(--space-4);
+    font-family: var(--font-atkinson, sans-serif);
+    color: var(--color-text);
+    background: var(--color-bg);
+  }
+
+  .shell {
+    width: 100%;
+    max-width: 720px;
+    margin: 0 auto;
+  }
+
+  .topbar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: var(--space-3);
+    margin-bottom: var(--space-4);
+  }
+
+  .back {
+    font-size: 0.9rem;
+    font-weight: 700;
+    color: var(--color-accent);
+    text-decoration: none;
+  }
+
+  .back:focus-visible {
+    outline: 2px solid var(--color-focus-ring);
+    outline-offset: 3px;
+  }
+
+  .brand {
+    display: flex;
+    align-items: center;
+    gap: var(--space-2);
+  }
+
+  .brand-logo {
+    display: block;
+    width: 36px;
+    height: 36px;
+    object-fit: cover;
+    border-radius: 50%;
+    border: 1px solid var(--color-accent-soft);
+  }
+
+  .brand-name {
+    font-family: var(--font-display, serif);
+    font-weight: 700;
+    font-size: 1.05rem;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    color: var(--color-heading);
+  }
+
+  .title {
+    margin: 0 0 var(--space-4);
+    font-family: var(--font-display, serif);
+    font-weight: 700;
+    font-size: clamp(1.9rem, 8vw, 2.6rem);
+    line-height: 1;
+    color: var(--color-heading);
+  }
+
+  /* --- Month calendar --- */
+  .calendar {
+    box-sizing: border-box;
+    margin: 0 0 var(--space-4);
+    padding: var(--space-3);
+    background: var(--color-surface);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-lg);
+  }
+
+  /* --- Day agenda --- */
+  .day-agenda {
+    margin-bottom: var(--space-5);
+  }
+
+  .view-date {
+    margin: 0 0 var(--space-3);
+    font-size: 0.85rem;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    color: var(--color-text-muted);
+  }
+
+  /* :global() — the day timeline (appointments and free slots alike) is
+     injected via innerHTML by the script above, so Astro's data-astro-cid
+     scoping never applies to its elements. */
+  :global(.timeline) {
+    display: flex;
+    flex-direction: column;
+    border-top: 1px solid var(--color-border);
+  }
+
+  :global(.day-row) {
+    display: grid;
+    grid-template-columns: 56px 1fr;
+    gap: var(--space-3);
+    border-bottom: 1px solid var(--color-border);
+  }
+
+  :global(.day-hour) {
+    padding: var(--space-2) 0;
+    font-family: var(--font-display, serif);
+    font-size: 0.85rem;
+    color: var(--color-text-muted);
+    text-align: right;
+  }
+
+  :global(.day-slots) {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-2);
+    min-height: 44px;
+    padding: var(--space-2) 0;
+  }
+
+  :global(.day-block) {
+    display: flex;
+    align-items: center;
+    gap: var(--space-3);
+    flex-wrap: wrap;
+    padding: var(--space-2) var(--space-3);
+    background: var(--color-surface);
+    border: 1px solid var(--color-border);
+    border-left: 4px solid var(--color-text-muted);
+    border-radius: var(--radius-lg);
+  }
+
+  :global(.day-block-time) {
+    font-family: var(--font-display, serif);
+    color: var(--color-heading);
+  }
+
+  :global(.day-block strong) {
+    font-size: 0.95rem;
+  }
+
+  :global(.day-block-meta) {
+    font-size: 0.8rem;
+    color: var(--color-text-muted);
+  }
+
+  :global(.now-line) {
+    position: relative;
+    height: 2px;
+    background: var(--color-accent);
+  }
+
+  :global(.now-line span) {
+    position: absolute;
+    top: -0.7rem;
+    left: 0;
+    padding: 0 0.35rem;
+    font-size: 0.65rem;
+    font-weight: 700;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--color-accent);
+    background: var(--color-bg);
+  }
+
+  :global(.empty) {
+    margin: 0;
+    padding: var(--space-4);
+    font-size: 0.9rem;
+    text-align: center;
+    color: var(--color-text-muted);
+    background: var(--color-surface);
+    border: 1px dashed var(--color-border);
+    border-radius: var(--radius-lg);
+  }
+
+  /* --- Day timeline rows (shared by appointments and free slots) --- */
+
+  /* --- Status pills (shared vocabulary: Atendido / Cancelado) --- */
+  :global(.pill) {
+    flex: 0 0 auto;
+    padding: 0.2rem 0.6rem;
+    font-size: 0.7rem;
+    font-weight: 700;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    border-radius: var(--radius-lg);
+    white-space: nowrap;
+  }
+
+  :global(.pill.is-pending) {
+    color: var(--color-text-muted);
+    background: var(--color-bg);
+    border: 1px solid var(--color-border);
+  }
+
+  :global(.pill.is-confirmed) {
+    color: var(--color-accent);
+    background: var(--color-accent-glow);
+    border: 1px solid var(--color-accent-line);
+  }
+
+  :global(.pill.is-done) {
+    color: var(--color-text-muted);
+    background: transparent;
+    border: 1px dashed var(--color-border);
+  }
+
+  :global(.pill.is-cancelled) {
+    color: var(--color-text-muted);
+    text-decoration: line-through;
+    background: color-mix(in srgb, var(--color-text-muted) 8%, transparent);
+    border: 1px solid var(--color-border);
+  }
+
+  @media (min-width: 720px) {
+    .page {
+      padding: var(--space-6) var(--space-4);
+    }
+  }
+
+</style>
