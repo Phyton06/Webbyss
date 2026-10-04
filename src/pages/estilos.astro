@@ -1,0 +1,349 @@
+---
+// Live style gallery: every sample consumes tokens.css through var() only.
+import BaseHead from '../components/BaseHead.astro';
+
+const base = import.meta.env.BASE_URL;
+
+// Semantic color tokens rendered as swatches with their live value.
+const swatches = [
+  '--color-bg',
+  '--color-surface',
+  '--color-text',
+  '--color-text-muted',
+  '--color-accent',
+  '--color-accent-hover',
+  '--color-on-accent',
+  '--color-field',
+  '--color-border',
+  '--color-social-bg',
+  '--color-social-text',
+];
+
+const typeRows = [1, 2, 3, 4, 5];
+const spaces = ['--space-1', '--space-2', '--space-3', '--space-4', '--space-5', '--space-6'];
+const radii = ['--radius-sm', '--radius-md', '--radius-lg'];
+---
+
+<!doctype html>
+<html lang="es">
+  <head>
+    <BaseHead
+      title="Estilos — Webby's BarberShop"
+      description="Galería viva del sistema de estilos"
+    />
+  </head>
+  <body>
+    <main>
+      <header>
+        <h1>Sistema de estilos</h1>
+        <p>
+          Cada muestra consume <strong>únicamente</strong> variables <code>var()</code> de
+          <code>tokens.css</code>. Cambiá el esquema del sistema para ver el modo oscuro.
+        </p>
+      </header>
+
+      <section>
+        <h2>Colores</h2>
+        <ul class="swatches">
+          {
+            swatches.map((t) => (
+              <li class="swatch">
+                <span class="chip" style={`background: var(${t})`}></span>
+                <code>{t}</code>
+                <span class="value" data-token={t}></span>
+              </li>
+            ))
+          }
+        </ul>
+      </section>
+
+      <section>
+        <h2>Escala tipográfica</h2>
+        <ul class="type-scale">
+          {
+            typeRows.map((lvl) => {
+              const Tag = `h${lvl}`;
+              return (
+                <li>
+                  <code>&lt;{Tag}&gt;</code>
+                  <Tag>Corte clásico</Tag>
+                </li>
+              );
+            })
+          }
+          <li>
+            <code>&lt;p&gt;</code>
+            <p>Párrafo con la escala base de 20px.</p>
+          </li>
+        </ul>
+      </section>
+
+      <section>
+        <h2>Botones</h2>
+        <div class="row">
+          <button class="btn btn-primary" type="button">Reservar cita</button>
+          <button class="btn btn-secondary" type="button">Ver precios</button>
+          <button class="btn btn-social" type="button">Continuar con Google</button>
+        </div>
+      </section>
+
+      <section>
+        <h2>Campos</h2>
+        <div class="row fields">
+          <label class="demo">
+            Por defecto
+            <input type="text" placeholder="ejemplo@barbershop.com" />
+          </label>
+          <label class="demo">
+            Foco
+            <input class="is-focus" type="text" value="borde dorado y anillo" />
+          </label>
+          <label class="demo">
+            Deshabilitado
+            <input type="text" disabled placeholder="No disponible" />
+          </label>
+        </div>
+      </section>
+
+      <section>
+        <h2>Espaciado y radios</h2>
+        <ul class="samples">
+          {
+            spaces.map((s) => (
+              <li>
+                <code>{s}</code>
+                <span class="bar" style={`width: var(${s})`}></span>
+              </li>
+            ))
+          }
+          {
+            radii.map((r) => (
+              <li>
+                <code>{r}</code>
+                <span class="box" style={`border-radius: var(${r})`}></span>
+              </li>
+            ))
+          }
+        </ul>
+      </section>
+
+      <footer>
+        <a href={`${base}/login/`}>← Volver al login</a>
+      </footer>
+    </main>
+
+    <script>
+      // Resolve each token once so swatches print the live computed value.
+      document.querySelectorAll('[data-token]').forEach((el) => {
+        const token = el.getAttribute('data-token') || '';
+        el.textContent = getComputedStyle(document.documentElement)
+          .getPropertyValue(token)
+          .trim();
+      });
+    </script>
+  </body>
+</html>
+
+<style>
+  header p {
+    margin: 0 0 var(--space-6);
+    line-height: 1.5;
+  }
+
+  header strong {
+    color: var(--color-accent);
+  }
+
+  section {
+    margin-bottom: var(--space-6);
+  }
+
+  h2 {
+    font-size: 1.563em;
+  }
+
+  /* Color swatches */
+  .swatches,
+  .samples {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--space-3);
+  }
+
+  .swatch {
+    display: flex;
+    align-items: center;
+    gap: var(--space-2);
+    padding: var(--space-2);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-md);
+    font-size: 0.85rem;
+  }
+
+  .chip {
+    flex: none;
+    width: var(--space-6);
+    height: var(--space-6);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-sm);
+  }
+
+  .value {
+    margin-left: auto;
+    color: var(--color-text-muted);
+    font-size: 0.75rem;
+  }
+
+  /* Type scale */
+  .type-scale {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+  }
+
+  .type-scale li {
+    display: flex;
+    align-items: baseline;
+    gap: var(--space-3);
+    padding: var(--space-2) 0;
+    border-bottom: 1px solid var(--color-border);
+  }
+
+  .type-scale code {
+    flex: none;
+    padding: 0;
+    background: transparent;
+    color: var(--color-text-muted);
+    font-size: 0.75rem;
+  }
+
+  .type-scale :is(h1, h2, h3, h4, h5, p) {
+    margin: 0;
+  }
+
+  /* Buttons */
+  .row {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--space-3);
+  }
+
+  .btn {
+    font: inherit;
+    font-weight: 700;
+    padding: var(--space-3) var(--space-4);
+    border-radius: var(--radius-lg);
+    cursor: pointer;
+  }
+
+  .btn-primary {
+    color: var(--button-primary-fg);
+    background: var(--button-primary-bg);
+    border: 1px solid var(--button-primary-bg);
+  }
+
+  .btn-primary:hover {
+    background: var(--button-primary-hover-bg);
+    border-color: var(--button-primary-hover-bg);
+  }
+
+  .btn-secondary {
+    color: var(--color-text);
+    background: var(--color-surface);
+    border: 1px solid var(--color-border);
+  }
+
+  .btn-social {
+    color: var(--color-social-text);
+    background: var(--color-social-bg);
+    border: 1px solid var(--color-social-border);
+  }
+
+  /* Fields */
+  .fields {
+    flex-direction: column;
+  }
+
+  .demo {
+    display: block;
+    font-size: 0.8rem;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--color-text-muted);
+  }
+
+  .demo input {
+    display: block;
+    box-sizing: border-box;
+    width: 100%;
+    margin-top: var(--space-1);
+    padding: var(--space-3);
+    font: inherit;
+    font-size: 1rem;
+    letter-spacing: normal;
+    text-transform: none;
+    color: var(--color-field-text);
+    background: var(--color-field);
+    border: 1px solid var(--color-field-border);
+    border-radius: var(--radius-lg);
+  }
+
+  .demo input:hover {
+    border-color: var(--color-field-border-hover);
+  }
+
+  .demo input:focus-visible,
+  .demo input.is-focus {
+    outline: none;
+    border-color: var(--color-accent);
+    box-shadow: 0 0 0 3px var(--color-accent-ring);
+  }
+
+  .demo input:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+  }
+
+  /* Spacing and radius samples */
+  .samples li {
+    display: flex;
+    align-items: center;
+    gap: var(--space-2);
+    font-size: 0.75rem;
+    color: var(--color-text-muted);
+  }
+
+  .bar {
+    display: block;
+    height: var(--space-3);
+    background: var(--color-accent);
+    border-radius: var(--radius-sm);
+  }
+
+  .box {
+    display: block;
+    width: var(--space-6);
+    height: var(--space-6);
+    background: var(--color-surface);
+    border: 1px solid var(--color-accent);
+  }
+
+  footer {
+    margin-top: var(--space-6);
+    text-align: center;
+  }
+
+  footer a {
+    color: var(--color-accent);
+    text-decoration: none;
+    border-bottom: 1px solid var(--color-accent-line);
+    padding-bottom: 1px;
+  }
+
+  footer a:hover {
+    color: var(--color-accent-hover);
+  }
+</style>

@@ -87,6 +87,9 @@ import InstallPrompt from '../components/InstallPrompt.astro';
         <a href="#" class="forgot">¿Olvidaste tu contraseña?</a>
       </div>
 
+      <!-- div (not p): keeps page.locator('p') single-match for the render test -->
+      <div class="alert" id="login-error" role="alert" hidden>Credenciales inválidas</div>
+
       <button type="submit" class="submit">Iniciar sesión</button>
 
       <div class="alt">
@@ -95,6 +98,52 @@ import InstallPrompt from '../components/InstallPrompt.astro';
         <a href="/register">Crear cuenta</a>
       </div>
     </form>
+
+    <script is:inline>
+      // ponytail: demo gate only — replace with Supabase auth when backend lands
+      const USERS = {
+        'admin@barber.com': { password: 'admin', role: 'admin' },
+        'barbero@barber.com': { password: 'barbero', role: 'barbero' },
+        'asistente@barber.com': { password: 'asistente', role: 'asistente' },
+        'cliente@barber.com': { password: 'cliente', role: 'cliente' },
+      };
+
+      const panelUrl = '/Webbyss/admin/';
+      // Non-admin landing: home (/Webbyss/) is still a meta-refresh stub back to
+      // login, so members land on About — user-approved destination.
+      const memberUrl = '/Webbyss/about/';
+
+      // Already signed in → skip the form (admin flag alone counts, pre-unification sessions).
+      const existingRole =
+        sessionStorage.getItem('webbys_role') ||
+        (sessionStorage.getItem('webbys_admin') === '1' ? 'admin' : null);
+      if (existingRole) {
+        location.replace(existingRole === 'admin' ? panelUrl : memberUrl);
+      }
+
+      const form = document.querySelector('.login-form');
+      const errorBox = document.getElementById('login-error');
+
+      form.addEventListener('submit', (event) => {
+        event.preventDefault();
+        errorBox.hidden = true;
+
+        const email = document.getElementById('email').value.trim();
+        const password = document.getElementById('password').value;
+        const user = USERS[email];
+
+        if (!user || user.password !== password) {
+          errorBox.hidden = false;
+          return;
+        }
+
+        sessionStorage.setItem('webbys_role', user.role);
+        if (user.role === 'admin') {
+          sessionStorage.setItem('webbys_admin', '1');
+        }
+        location.href = user.role === 'admin' ? panelUrl : memberUrl;
+      });
+    </script>
   </main>
   <InstallPrompt />
 </div>
@@ -108,10 +157,10 @@ import InstallPrompt from '../components/InstallPrompt.astro';
     display: flex;
     align-items: center;
     justify-content: center;
-    padding: 1rem;
+    padding: var(--space-4);
     font-family: var(--font-atkinson, sans-serif);
-    color: #9aa4b8;
-    background: #000;
+    color: var(--color-text-muted);
+    background: var(--color-bg);
   }
 
   .login-card {
@@ -129,13 +178,11 @@ import InstallPrompt from '../components/InstallPrompt.astro';
     display: block;
     width: 80px;
     height: 80px;
-    margin: 0 auto 0.75rem;
+    margin: 0 auto var(--space-3);
     object-fit: cover;
     border-radius: 50%;
-    border: 1px solid rgba(212, 175, 106, 0.55);
-    box-shadow:
-      0 0 0 4px rgba(212, 175, 106, 0.1),
-      0 12px 26px rgba(0, 0, 0, 0.45);
+    border: 1px solid var(--color-accent-soft);
+    box-shadow: var(--shadow-logo);
   }
 
   h1 {
@@ -146,7 +193,7 @@ import InstallPrompt from '../components/InstallPrompt.astro';
     line-height: 0.95;
     text-transform: uppercase;
     letter-spacing: 0.03em;
-    color: #f2f4f8;
+    color: var(--color-heading);
   }
 
   .brand-pre {
@@ -154,14 +201,14 @@ import InstallPrompt from '../components/InstallPrompt.astro';
     font-size: 0.36em;
     letter-spacing: 0.42em;
     margin-bottom: 0.45rem;
-    color: #d4af6a;
+    color: var(--color-accent-bright);
   }
 
   .tagline {
     margin: 0;
     font-size: 0.95rem;
     letter-spacing: 0.08em;
-    color: #9aa4b8;
+    color: var(--color-text-muted);
   }
 
   .social {
@@ -180,14 +227,14 @@ import InstallPrompt from '../components/InstallPrompt.astro';
     gap: 0.6rem;
     box-sizing: border-box;
     width: 100%;
-    padding: 0.75rem 1rem;
+    padding: var(--space-3) var(--space-4);
     font-family: inherit;
     font-size: 0.95rem;
     font-weight: 600;
-    color: #171717;
-    background: #ffffff;
-    border: 1px solid #ffffff;
-    border-radius: 10px;
+    color: var(--color-social-text);
+    background: var(--color-social-bg);
+    border: 1px solid var(--color-social-border);
+    border-radius: var(--radius-lg);
     cursor: not-allowed;
     opacity: 0.85;
   }
@@ -197,15 +244,15 @@ import InstallPrompt from '../components/InstallPrompt.astro';
   }
 
   .social-btn:not(:disabled):hover {
-    background: #e8e8e8;
+    background: var(--color-social-hover);
   }
 
   .divider {
     display: flex;
     align-items: center;
-    gap: 0.75rem;
+    gap: var(--space-3);
     margin-bottom: 0.95rem;
-    color: #5d6579;
+    color: var(--color-divider-text);
     font-size: 0.85rem;
     text-transform: uppercase;
     letter-spacing: 0.1em;
@@ -216,7 +263,7 @@ import InstallPrompt from '../components/InstallPrompt.astro';
     content: '';
     flex: 1;
     height: 1px;
-    background: rgba(154, 164, 184, 0.25);
+    background: var(--color-divider-line);
   }
 
   .field {
@@ -229,7 +276,7 @@ import InstallPrompt from '../components/InstallPrompt.astro';
     font-size: 0.8rem;
     letter-spacing: 0.12em;
     text-transform: uppercase;
-    color: #9aa4b8;
+    color: var(--color-text-muted);
   }
 
   .field input {
@@ -238,34 +285,34 @@ import InstallPrompt from '../components/InstallPrompt.astro';
     padding: 0.8rem 0.9rem;
     font-family: inherit;
     font-size: 1rem;
-    color: #eef1f6;
-    background: #141414;
-    border: 1px solid #333333;
-    border-radius: 10px;
+    color: var(--color-field-text);
+    background: var(--color-field);
+    border: 1px solid var(--color-field-border);
+    border-radius: var(--radius-lg);
     transition:
       border-color 0.18s ease,
       box-shadow 0.18s ease;
   }
 
   .field input::placeholder {
-    color: #828ca3;
+    color: var(--color-field-placeholder);
   }
 
   .field input:hover {
-    border-color: #555555;
+    border-color: var(--color-field-border-hover);
   }
 
   .field input:focus-visible {
     outline: none;
-    border-color: #d4af6a;
-    box-shadow: 0 0 0 3px rgba(212, 175, 106, 0.22);
+    border-color: var(--color-accent);
+    box-shadow: 0 0 0 3px var(--color-accent-ring);
   }
 
   .form-row {
     display: flex;
     align-items: center;
     justify-content: space-between;
-    gap: 0.75rem;
+    gap: var(--space-3);
     margin-bottom: 0.9rem;
     font-size: 0.9rem;
   }
@@ -280,13 +327,13 @@ import InstallPrompt from '../components/InstallPrompt.astro';
   .remember input {
     width: 1rem;
     height: 1rem;
-    accent-color: #d4af6a;
+    accent-color: var(--color-accent);
   }
 
   .forgot {
-    color: #d4af6a;
+    color: var(--color-accent);
     text-decoration: none;
-    border-bottom: 1px solid rgba(212, 175, 106, 0.45);
+    border-bottom: 1px solid var(--color-accent-line);
     padding-bottom: 1px;
     transition:
       color 0.18s ease,
@@ -294,14 +341,25 @@ import InstallPrompt from '../components/InstallPrompt.astro';
   }
 
   .forgot:hover {
-    color: #e5c489;
-    border-color: #e5c489;
+    color: var(--color-accent-hover);
+    border-color: var(--color-accent-hover);
   }
 
   .forgot:focus-visible {
-    outline: 2px solid #d4af6a;
+    outline: 2px solid var(--color-focus-ring);
     outline-offset: 3px;
-    border-radius: 2px;
+    border-radius: var(--radius-sm);
+  }
+
+  /* Inline error: gold alert (tokens have no danger palette — brand accent reads as "look here"). */
+  .alert {
+    margin: 0 0 0.9rem;
+    padding: var(--space-2) var(--space-3);
+    font-size: 0.9rem;
+    color: var(--color-accent);
+    background: var(--color-accent-glow);
+    border: 1px solid var(--color-accent-line);
+    border-radius: var(--radius-md);
   }
 
   .submit {
@@ -309,15 +367,15 @@ import InstallPrompt from '../components/InstallPrompt.astro';
     box-sizing: border-box;
     width: 100%;
     margin-top: 0.4rem;
-    padding: 0.9rem 1rem;
+    padding: 0.9rem var(--space-4);
     font-family: inherit;
     font-size: 1rem;
     font-weight: 700;
     letter-spacing: 0.04em;
-    color: #10131c;
-    background: #d4af6a;
-    border: 1px solid #d4af6a;
-    border-radius: 10px;
+    color: var(--button-primary-fg);
+    background: var(--button-primary-bg);
+    border: 1px solid var(--button-primary-bg);
+    border-radius: var(--radius-lg);
     cursor: pointer;
     transition:
       background 0.18s ease,
@@ -327,10 +385,10 @@ import InstallPrompt from '../components/InstallPrompt.astro';
   }
 
   .submit:hover {
-    background: #e5c489;
-    border-color: #e5c489;
+    background: var(--button-primary-hover-bg);
+    border-color: var(--button-primary-hover-bg);
     transform: translateY(-1px);
-    box-shadow: 0 12px 24px rgba(212, 175, 106, 0.28);
+    box-shadow: 0 12px 24px var(--color-accent-shadow);
   }
 
   .submit:active {
@@ -339,7 +397,7 @@ import InstallPrompt from '../components/InstallPrompt.astro';
   }
 
   .submit:focus-visible {
-    outline: 2px solid #e5c489;
+    outline: 2px solid var(--button-primary-focus-outline);
     outline-offset: 3px;
   }
 
@@ -347,20 +405,20 @@ import InstallPrompt from '../components/InstallPrompt.astro';
     display: flex;
     align-items: center;
     justify-content: center;
-    gap: 0.5rem;
+    gap: var(--space-2);
     margin-top: 0.9rem;
     font-size: 0.95rem;
-    color: #9aa4b8;
+    color: var(--color-text-muted);
   }
 
   .alt-sep {
-    color: #5d6579;
+    color: var(--color-divider-text);
   }
 
   .alt a {
-    color: #d4af6a;
+    color: var(--color-accent);
     text-decoration: none;
-    border-bottom: 1px solid rgba(212, 175, 106, 0.45);
+    border-bottom: 1px solid var(--color-accent-line);
     padding-bottom: 1px;
     transition:
       color 0.18s ease,
@@ -368,20 +426,20 @@ import InstallPrompt from '../components/InstallPrompt.astro';
   }
 
   .alt a:hover {
-    color: #e5c489;
-    border-color: #e5c489;
+    color: var(--color-accent-hover);
+    border-color: var(--color-accent-hover);
   }
 
   .alt a:focus-visible {
-    outline: 2px solid #d4af6a;
+    outline: 2px solid var(--color-focus-ring);
     outline-offset: 3px;
-    border-radius: 2px;
+    border-radius: var(--radius-sm);
   }
 
   /* Short phones (<=700px tall): compact rhythm so the login never scrolls. */
   @media (max-height: 700px) {
     .page {
-      padding: 0.75rem;
+      padding: var(--space-3);
     }
 
     .brand {
@@ -391,7 +449,7 @@ import InstallPrompt from '../components/InstallPrompt.astro';
     .brand-logo {
       width: 56px;
       height: 56px;
-      margin-bottom: 0.5rem;
+      margin-bottom: var(--space-2);
     }
 
     h1 {
@@ -399,7 +457,7 @@ import InstallPrompt from '../components/InstallPrompt.astro';
     }
 
     .brand-pre {
-      margin-bottom: 0.25rem;
+      margin-bottom: var(--space-1);
     }
 
     .social,
@@ -410,7 +468,7 @@ import InstallPrompt from '../components/InstallPrompt.astro';
     }
 
     .social-btn {
-      padding: 0.6rem 1rem;
+      padding: 0.6rem var(--space-4);
     }
 
     .field input {
@@ -419,7 +477,7 @@ import InstallPrompt from '../components/InstallPrompt.astro';
 
     .submit {
       margin-top: 0.2rem;
-      padding: 0.75rem 1rem;
+      padding: var(--space-3) var(--space-4);
     }
 
     .alt {
@@ -487,102 +545,101 @@ import InstallPrompt from '../components/InstallPrompt.astro';
     }
   }
 
-  /* Light theme when the device reports light mode. Gold darkened for AA contrast on white. */
+  /* Light theme when the device reports light mode. Gold darkened for AA contrast on white.
+     Colors now resolve from tokens; declarations are kept so no media-query rule is removed. */
   @media (prefers-color-scheme: light) {
     .page {
-      color: #5d6579;
-      background: #ffffff;
+      color: var(--color-text-muted);
+      background: var(--color-bg);
     }
 
     .brand-logo {
-      border-color: rgba(138, 106, 47, 0.55);
-      box-shadow:
-        0 0 0 4px rgba(138, 106, 47, 0.12),
-        0 12px 26px rgba(23, 27, 38, 0.18);
+      border-color: var(--color-accent-soft);
+      box-shadow: var(--shadow-logo);
     }
 
     h1 {
-      color: #171b26;
+      color: var(--color-heading);
     }
 
     .tagline,
     .field label,
     .alt {
-      color: #5d6579;
+      color: var(--color-text-muted);
     }
 
     .social-btn {
-      color: #171717;
-      background: #ffffff;
-      border-color: #d4d4d8;
+      color: var(--color-social-text);
+      background: var(--color-social-bg);
+      border-color: var(--color-social-border);
     }
 
     .divider {
-      color: #828ca3;
+      color: var(--color-divider-text);
     }
 
     .divider::before,
     .divider::after {
-      background: rgba(23, 27, 38, 0.14);
+      background: var(--color-divider-line);
     }
 
     .field input {
-      color: #171b26;
-      background: #f4f4f5;
-      border-color: #d4d4d8;
+      color: var(--color-field-text);
+      background: var(--color-field);
+      border-color: var(--color-field-border);
     }
 
     .field input:hover {
-      border-color: #a1a1aa;
+      border-color: var(--color-field-border-hover);
     }
 
     .field input:focus-visible {
-      border-color: #8a6a2f;
-      box-shadow: 0 0 0 3px rgba(138, 106, 47, 0.22);
+      border-color: var(--color-accent);
+      box-shadow: 0 0 0 3px var(--color-accent-ring);
     }
 
     .remember input {
-      accent-color: #8a6a2f;
+      accent-color: var(--color-accent);
     }
 
     .forgot {
-      color: #8a6a2f;
-      border-bottom-color: rgba(138, 106, 47, 0.45);
+      color: var(--color-accent);
+      border-bottom-color: var(--color-accent-line);
     }
 
     .forgot:hover {
-      color: #6f5524;
-      border-color: #6f5524;
+      color: var(--color-accent-hover);
+      border-color: var(--color-accent-hover);
     }
 
     .submit {
-      color: #ffffff;
-      background: #8a6a2f;
-      border-color: #8a6a2f;
+      color: var(--button-primary-fg);
+      background: var(--button-primary-bg);
+      border-color: var(--button-primary-bg);
     }
 
     .submit:hover {
-      background: #6f5524;
-      border-color: #6f5524;
-      box-shadow: 0 12px 24px rgba(138, 106, 47, 0.3);
+      background: var(--button-primary-hover-bg);
+      border-color: var(--button-primary-hover-bg);
+      box-shadow: 0 12px 24px var(--color-accent-shadow);
     }
 
     .submit:focus-visible {
-      outline-color: #8a6a2f;
+      outline-color: var(--button-primary-focus-outline);
     }
 
     .alt-sep {
-      color: #828ca3;
+      color: var(--color-divider-text);
     }
 
     .alt a {
-      color: #8a6a2f;
-      border-bottom-color: rgba(138, 106, 47, 0.45);
+      color: var(--color-accent);
+      border-bottom-color: var(--color-accent-line);
     }
 
     .alt a:hover {
-      color: #6f5524;
-      border-color: #6f5524;
+      color: var(--color-accent-hover);
+      border-color: var(--color-accent-hover);
     }
   }
 </style>

@@ -1,0 +1,513 @@
+---
+import BaseHead from '../../components/BaseHead.astro';
+
+const base = import.meta.env.BASE_URL;
+---
+
+<!doctype html>
+<html lang="es">
+  <head>
+    <BaseHead
+      title="Inicio — Admin | Webby's BarberShop"
+      description="Panel de administración de Webby's BarberShop"
+    />
+  </head>
+  <body>
+    <div class="page">
+      <div class="shell">
+        <header class="topbar">
+          <span class="brand">
+            <img
+              src={`${base}/assets/logo.jpeg`}
+              alt="Webby's BarberShop"
+              class="brand-logo"
+              width="44"
+              height="44"
+            />
+            <span class="brand-name">Webby's</span>
+          </span>
+          <span class="chip">Admin</span>
+        </header>
+
+        <p class="full-date" id="full-date"></p>
+
+        <h1 class="greeting">Hola, Admin</h1>
+
+        <section class="kpis" aria-label="Indicadores de hoy">
+          <article class="kpi">
+            <span class="kpi-label">Citas hoy</span>
+            <strong class="kpi-value" id="kpi-citas">0</strong>
+          </article>
+          <article class="kpi">
+            <span class="kpi-label">Pendientes</span>
+            <strong class="kpi-value" id="kpi-pendientes">0</strong>
+          </article>
+          <!-- ponytail: mock KPIs, wire to backend when Supabase lands -->
+          <article class="kpi">
+            <span class="kpi-label">Ingresos</span>
+            <strong class="kpi-value">$48.000</strong>
+          </article>
+          <article class="kpi">
+            <span class="kpi-label">Ocupación</span>
+            <strong class="kpi-value">68%</strong>
+          </article>
+        </section>
+
+        <section class="agenda" aria-labelledby="agenda-title">
+          <h2 id="agenda-title">Próximas citas</h2>
+          <div id="agenda-groups"></div>
+          <a class="agenda-link" href="/Webbyss/admin/agenda">Ver agenda completa</a>
+        </section>
+
+        <a class="cta" href="/Webbyss/admin/nueva-cita">+ Nueva cita</a>
+      </div>
+    </div>
+
+    <script is:inline>
+      if (sessionStorage.getItem('webbys_admin') !== '1') {
+        location.replace('/Webbyss/login');
+      }
+    </script>
+
+    <script>
+      import {
+        loadAppointments,
+        todayKey,
+        parseKey,
+        hhmm,
+        escapeHtml,
+        statusClass,
+        BARBERS,
+        BARBER_TOKEN,
+      } from '../../scripts/appointments.js';
+
+      const TODAY = todayKey();
+      const now = hhmm();
+      const all = loadAppointments();
+
+      const todays = all
+        .filter((appointment) => appointment.date === TODAY)
+        .sort((a, b) => a.time.localeCompare(b.time));
+
+      document.getElementById('kpi-citas').textContent = String(todays.length);
+      document.getElementById('kpi-pendientes').textContent = String(
+        todays.filter((appointment) => appointment.status === 'Pendiente').length,
+      );
+
+      // Revision 4 delta 2: upcoming from now across days (today ≥ now, then
+      // tomorrow, …), ascending, so the demo sections are never empty.
+      const upcoming = all
+        .filter(
+          (appointment) =>
+            appointment.date > TODAY ||
+            (appointment.date === TODAY && appointment.time >= now),
+        )
+        .sort((a, b) =>
+          `${a.date} ${a.time}`.localeCompare(`${b.date} ${b.time}`),
+        );
+
+      const tomorrow = parseKey(TODAY);
+      tomorrow.setDate(tomorrow.getDate() + 1);
+      const TOMORROW = `${tomorrow.getFullYear()}-${
+        String(tomorrow.getMonth() + 1).padStart(2, '0')
+      }-${String(tomorrow.getDate()).padStart(2, '0')}`;
+
+      // Spanish date context: `Hoy · 16:00` / `Mañana · 09:00` / `Sáb 04 · 11:00`.
+      function contextLabel(appointment) {
+        if (appointment.date === TODAY) return `Hoy · ${appointment.time}`;
+        if (appointment.date === TOMORROW) return `Mañana · ${appointment.time}`;
+        const short = parseKey(appointment.date).toLocaleDateString('es-AR', {
+          weekday: 'short',
+          day: '2-digit',
+        });
+        const day = short.charAt(0).toUpperCase() + short.slice(1);
+        return `${day} · ${appointment.time}`;
+      }
+
+      // Revision 3 delta 1: always render the three per-barber sections.
+      const groups = document.getElementById('agenda-groups');
+      groups.innerHTML = BARBERS.map((barber) => {
+        const items = upcoming
+          .filter((appointment) => appointment.barber === barber)
+          .slice(0, 4);
+        const body =
+          items.length === 0
+            ? `<p class="agenda-free">Sin citas próximas</p>`
+            : `<ul class="agenda-list">
+                ${items
+                  .map(
+                    (appointment) => `
+                  <li class="agenda-item">
+                    <span class="agenda-time">${escapeHtml(contextLabel(appointment))}</span>
+                    <span class="agenda-body">
+                      <strong class="agenda-client">${escapeHtml(appointment.client)}</strong>
+                      <span class="agenda-service">${escapeHtml(appointment.service)}</span>
+                    </span>
+                    <span class="pill ${statusClass(appointment.status)}">${escapeHtml(appointment.status)}</span>
+                  </li>`,
+                  )
+                  .join('')}
+              </ul>`;
+
+        return `
+          <section class="barber-group" aria-label="${escapeHtml(barber)}">
+            <h3 class="barber-group-title">
+              <span class="dot" style="background: ${BARBER_TOKEN[barber]}"></span>
+              ${escapeHtml(barber)}
+              <span class="barber-count">${items.length}</span>
+            </h3>
+            ${body}
+          </section>`;
+      }).join('');
+
+      const todayLabel = new Date().toLocaleDateString('es-AR', {
+        weekday: 'long',
+        day: 'numeric',
+        month: 'long',
+        year: 'numeric',
+      });
+      document.getElementById('full-date').textContent =
+        todayLabel.charAt(0).toUpperCase() + todayLabel.slice(1);
+    </script>
+  </body>
+</html>
+
+<style>
+  .page {
+    box-sizing: border-box;
+    min-height: 100vh;
+    min-height: 100dvh;
+    padding: var(--space-4);
+    font-family: var(--font-atkinson, sans-serif);
+    color: var(--color-text);
+    background: var(--color-bg);
+  }
+
+  .shell {
+    width: 100%;
+    max-width: 640px;
+    margin: 0 auto;
+  }
+
+  .topbar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: var(--space-3);
+    margin-bottom: var(--space-4);
+  }
+
+  .brand {
+    display: flex;
+    align-items: center;
+    gap: var(--space-2);
+  }
+
+  .brand-logo {
+    display: block;
+    width: 44px;
+    height: 44px;
+    object-fit: cover;
+    border-radius: 50%;
+    border: 1px solid var(--color-accent-soft);
+    box-shadow: var(--shadow-logo);
+  }
+
+  .brand-name {
+    font-family: var(--font-display, serif);
+    font-weight: 700;
+    font-size: 1.25rem;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    color: var(--color-heading);
+  }
+
+  .chip {
+    padding: 0.25rem 0.7rem;
+    font-size: 0.75rem;
+    font-weight: 700;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: var(--color-accent);
+    background: var(--color-accent-glow);
+    border: 1px solid var(--color-accent-line);
+    border-radius: var(--radius-lg);
+  }
+
+  .full-date {
+    margin: 0 0 var(--space-2);
+    font-size: 0.85rem;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    color: var(--color-text-muted);
+  }
+
+  .greeting {
+    margin: 0 0 var(--space-5);
+    font-family: var(--font-display, serif);
+    font-weight: 700;
+    font-size: clamp(2.2rem, 9vw, 3rem);
+    line-height: 1;
+    color: var(--color-heading);
+  }
+
+  .kpis {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: var(--space-3);
+    margin-bottom: var(--space-5);
+  }
+
+  .kpi {
+    box-sizing: border-box;
+    padding: var(--space-3) var(--space-4);
+    background: var(--color-surface);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-lg);
+  }
+
+  .kpi-label {
+    display: block;
+    margin-bottom: var(--space-1);
+    font-size: 0.75rem;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--color-text-muted);
+  }
+
+  .kpi-value {
+    display: block;
+    font-family: var(--font-display, serif);
+    font-size: clamp(1.7rem, 7vw, 2.1rem);
+    line-height: 1.1;
+    color: var(--color-accent);
+  }
+
+  .agenda {
+    margin-bottom: var(--space-5);
+  }
+
+  .agenda h2 {
+    margin: 0 0 var(--space-3);
+    font-size: 0.85rem;
+    font-weight: 700;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: var(--color-text-muted);
+  }
+
+  /* :global() — these classes are injected via innerHTML by the script below,
+     so Astro's data-astro-cid scoping never applies to their elements. */
+  :global(.barber-group + .barber-group) {
+    margin-top: var(--space-4);
+  }
+
+  :global(.barber-group-title) {
+    display: flex;
+    align-items: center;
+    gap: var(--space-2);
+    margin: 0 0 var(--space-2);
+    font-family: var(--font-display, serif);
+    font-size: 1.05rem;
+    font-weight: 700;
+    color: var(--color-heading);
+  }
+
+  :global(.dot) {
+    display: inline-block;
+    width: 9px;
+    height: 9px;
+    border-radius: 50%;
+  }
+
+  :global(.barber-count) {
+    padding: 0.1rem 0.5rem;
+    font-family: var(--font-atkinson, sans-serif);
+    font-size: 0.72rem;
+    font-weight: 700;
+    color: var(--color-text-muted);
+    background: var(--color-bg);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-lg);
+  }
+
+  :global(.agenda-free) {
+    margin: 0;
+    padding: var(--space-2) var(--space-3);
+    font-size: 0.88rem;
+    font-style: italic;
+    color: var(--color-text-muted);
+  }
+
+  :global(.agenda-list) {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-2);
+  }
+
+  :global(.agenda-item) {
+    display: flex;
+    align-items: center;
+    gap: var(--space-3);
+    box-sizing: border-box;
+    padding: var(--space-3);
+    background: var(--color-surface);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-lg);
+  }
+
+  :global(.agenda-time) {
+    flex: 0 0 auto;
+    font-family: var(--font-display, serif);
+    font-size: 1rem;
+    white-space: nowrap;
+    color: var(--color-heading);
+  }
+
+  :global(.agenda-body) {
+    flex: 1 1 auto;
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
+  }
+
+  :global(.agenda-client) {
+    font-size: 1rem;
+    color: var(--color-text);
+  }
+
+  :global(.agenda-service) {
+    font-size: 0.85rem;
+    color: var(--color-text-muted);
+  }
+
+  :global(.pill) {
+    flex: 0 0 auto;
+    padding: 0.2rem 0.6rem;
+    font-size: 0.72rem;
+    font-weight: 700;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    border-radius: var(--radius-lg);
+    white-space: nowrap;
+  }
+
+  :global(.pill.is-pending) {
+    color: var(--color-text-muted);
+    background: var(--color-bg);
+    border: 1px solid var(--color-border);
+  }
+
+  :global(.pill.is-confirmed) {
+    color: var(--color-accent);
+    background: var(--color-accent-glow);
+    border: 1px solid var(--color-accent-line);
+  }
+
+  :global(.pill.is-done) {
+    color: var(--color-text-muted);
+    background: transparent;
+    border: 1px dashed var(--color-border);
+  }
+
+  :global(.pill.is-cancelled) {
+    color: var(--color-text-muted);
+    text-decoration: line-through;
+    background: color-mix(in srgb, var(--color-text-muted) 8%, transparent);
+    border: 1px solid var(--color-border);
+  }
+
+  .agenda-link {
+    display: block;
+    margin-top: var(--space-3);
+    padding: var(--space-3);
+    font-size: 0.95rem;
+    font-weight: 700;
+    letter-spacing: 0.04em;
+    text-align: center;
+    text-decoration: none;
+    color: var(--color-accent);
+    background: var(--color-accent-glow);
+    border: 1px solid var(--color-accent-line);
+    border-radius: var(--radius-lg);
+    transition:
+      background 0.18s ease,
+      border-color 0.18s ease;
+  }
+
+  .agenda-link:hover {
+    background: var(--color-surface);
+    border-color: var(--color-accent);
+  }
+
+  .agenda-link:focus-visible {
+    outline: 2px solid var(--color-focus-ring);
+    outline-offset: 3px;
+  }
+
+  .cta {
+    display: block;
+    box-sizing: border-box;
+    width: 100%;
+    padding: 0.95rem var(--space-4);
+    font-size: 1rem;
+    font-weight: 700;
+    letter-spacing: 0.04em;
+    text-align: center;
+    text-decoration: none;
+    color: var(--button-primary-fg);
+    background: var(--button-primary-bg);
+    border: 1px solid var(--button-primary-bg);
+    border-radius: var(--radius-lg);
+    transition:
+      background 0.18s ease,
+      border-color 0.18s ease,
+      transform 0.18s ease,
+      box-shadow 0.18s ease;
+  }
+
+  .cta:hover {
+    background: var(--button-primary-hover-bg);
+    border-color: var(--button-primary-hover-bg);
+    transform: translateY(-1px);
+    box-shadow: 0 12px 24px var(--color-accent-shadow);
+  }
+
+  .cta:focus-visible {
+    outline: 2px solid var(--button-primary-focus-outline);
+    outline-offset: 3px;
+  }
+
+  /* Graceful widening: keep the 2×2 rhythm, just add breathing room. */
+  @media (min-width: 720px) {
+    .page {
+      padding: var(--space-6) var(--space-4);
+    }
+
+    .shell {
+      max-width: 720px;
+    }
+
+    .kpis {
+      gap: var(--space-4);
+    }
+
+    :global(.agenda-item) {
+      padding: var(--space-3) var(--space-4);
+    }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .cta,
+    .agenda-link {
+      transition: none;
+    }
+
+    .cta:hover {
+      transform: none;
+    }
+  }
+</style>

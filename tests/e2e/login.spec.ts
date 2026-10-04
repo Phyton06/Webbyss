@@ -102,3 +102,60 @@ test.describe('Login Page', () => {
     );
   });
 });
+
+// Unified login gate (odd/tasks/unified-login.md): one login, role-based redirect.
+test.describe('Unified login gate', () => {
+  async function signIn(
+    page: import('@playwright/test').Page,
+    email: string,
+    password: string,
+  ) {
+    await page.goto('/Webbyss/login');
+    await page.getByLabel(/correo/i).fill(email);
+    await page.getByLabel(/contraseña/i).fill(password);
+    await page.getByRole('button', { name: /iniciar sesi[oó]n/i }).click();
+  }
+
+  function session(page: import('@playwright/test').Page) {
+    return page.evaluate(() => ({
+      role: sessionStorage.getItem('webbys_role'),
+      admin: sessionStorage.getItem('webbys_admin'),
+    }));
+  }
+
+  test('admin credentials land on the admin panel with admin + role session', async ({
+    page,
+  }) => {
+    await signIn(page, 'admin@barber.com', 'admin');
+    await expect(page).toHaveURL(/\/Webbyss\/admin\/?$/);
+    expect(await session(page)).toEqual({ role: 'admin', admin: '1' });
+  });
+
+  for (const [email, password, role] of [
+    ['barbero@barber.com', 'barbero', 'barbero'],
+    ['asistente@barber.com', 'asistente', 'asistente'],
+    ['cliente@barber.com', 'cliente', 'cliente'],
+  ]) {
+    test(`${role} credentials land on about with role session and no admin flag`, async ({
+      page,
+    }) => {
+      await signIn(page, email, password);
+      await expect(page).toHaveURL(/\/Webbyss\/about\/?$/);
+      expect(await session(page)).toEqual({ role, admin: null });
+    });
+  }
+
+  test('wrong password shows inline error and stays on the login page', async ({ page }) => {
+    await signIn(page, 'admin@barber.com', 'wrong-pass');
+    await expect(page.getByText(/credenciales inválidas/i)).toBeVisible();
+    await expect(page).toHaveURL(/\/Webbyss\/login\/?$/);
+    expect(await session(page)).toEqual({ role: null, admin: null });
+  });
+
+  test('unauthenticated visit to the admin panel redirects to the unified login', async ({
+    page,
+  }) => {
+    await page.goto('/Webbyss/admin/');
+    await expect(page).toHaveURL(/\/Webbyss\/login\/?$/);
+  });
+});
