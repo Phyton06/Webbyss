@@ -1,0 +1,1624 @@
+---
+import BaseHead from '../../components/BaseHead.astro';
+
+const base = import.meta.env.BASE_URL;
+---
+
+<!doctype html>
+<html lang="es">
+  <head>
+    <BaseHead
+      title="Nueva cita — Admin | Webby's BarberShop"
+      description="Registro de citas de Webby's BarberShop"
+    />
+  </head>
+  <body>
+    <div class="page">
+      <div class="shell">
+        <header class="topbar">
+          <a class="back" href={`${base}/admin/`}>← Inicio</a>
+          <span class="chip">Admin</span>
+        </header>
+
+        <h1 class="title">Nueva cita</h1>
+
+        <form class="cita-form" id="cita-form" novalidate>
+          <p class="info">
+            La cita se guarda como <strong>pendiente</strong> hasta que el cliente complete su
+            registro con el link.
+          </p>
+
+          <!-- ══ Paso 1 — Cliente ══ -->
+          <div id="step-1">
+            <!-- View A: search -->
+            <div id="view-search">
+              <fieldset>
+                <legend>Cliente</legend>
+
+                <div class="search" id="client-search">
+                  <label for="client-query">Buscar cliente</label>
+                  <input
+                    class="search-input"
+                    type="search"
+                    id="client-query"
+                    placeholder="Nombre o teléfono"
+                    autocomplete="off"
+                  />
+                  <div class="search-results" id="client-results" hidden>
+                    <!-- result rows are injected here (innerHTML → global classes) -->
+                    <div class="search-rows" id="client-rows"></div>
+                    <div class="search-add">
+                      <button type="button" class="search-add-btn" id="registralo-btn">
+                        ¿No lo encuentras? Registralo
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              </fieldset>
+
+              <!-- Own card below the search: shows up only with a selection. -->
+              <div class="client-chip" id="selected-client" hidden>
+                <span class="client-chip-text" id="selected-client-text"></span>
+                <button type="button" class="linklike" id="change-client-btn">Cambiar</button>
+              </div>
+
+              <div class="bottom-bar">
+                <button type="button" class="submit" id="continue-btn" disabled>Continuar</button>
+              </div>
+            </div>
+
+            <!-- View B: add client (solo nombre + teléfono) -->
+            <div id="view-add" hidden>
+              <fieldset>
+                <legend>Registrar cliente</legend>
+
+                <div class="field">
+                  <label for="new-client-name">Nombre y apellido</label>
+                  <input
+                    type="text"
+                    id="new-client-name"
+                    placeholder="Nombre del cliente"
+                    autocomplete="name"
+                  />
+                  <p class="field-error" id="error-cliente" hidden>
+                    Ingresá el nombre del cliente
+                  </p>
+                </div>
+
+                <div class="field">
+                  <label for="new-client-phone">Teléfono</label>
+                  <input
+                    type="tel"
+                    id="new-client-phone"
+                    placeholder="+54 9 11 0000-0000"
+                    autocomplete="tel"
+                  />
+                  <p class="field-error" id="error-telefono" hidden>Ingresá el teléfono</p>
+                </div>
+
+                <button type="button" class="submit" id="save-client-btn">
+                  Guardar cliente
+                </button>
+                <button type="button" class="linklike" id="back-search-btn">
+                  ← Volver a buscar
+                </button>
+              </fieldset>
+            </div>
+
+            <!-- View C: client saved → share link + continue to the agenda -->
+            <div id="view-confirm" hidden>
+              <fieldset>
+                <legend>Link de registro</legend>
+
+                <div class="field">
+                  <label for="share-link">Link de registro</label>
+                  <input type="text" id="share-link" readonly />
+                </div>
+
+                <p class="copy-hint" id="copy-hint" hidden>
+                  No se pudo copiar: seleccioná el link y copialo a mano.
+                </p>
+
+                <div class="actions">
+                  <button type="button" class="secondary" id="copy-btn">Copiar link</button>
+                  <button type="button" class="submit" id="continue-agenda-btn">
+                    Continuar con la agenda de la cita
+                  </button>
+                </div>
+              </fieldset>
+            </div>
+          </div>
+
+          <!-- ══ Paso 2 — Cita ══ -->
+          <div id="step-2" hidden>
+            <div class="client-head">
+              <span class="client-head-name" id="step2-client"></span>
+              <button type="button" class="linklike" id="back-client-btn">Cambiar</button>
+            </div>
+
+            <fieldset class="chips">
+              <legend>Fecha</legend>
+              <div class="date-nav">
+                <button
+                  type="button"
+                  class="date-page"
+                  id="date-prev"
+                  aria-label="Días anteriores">‹</button
+                >
+                <div class="date-strip" id="date-strip"></div>
+                <button
+                  type="button"
+                  class="date-page"
+                  id="date-next"
+                  aria-label="Días siguientes">›</button
+                >
+              </div>
+            </fieldset>
+
+            <div class="filters">
+              <div class="filter" id="barber-filter">
+                <button
+                  type="button"
+                  class="filter-trigger"
+                  id="barber-trigger"
+                  aria-expanded="false"
+                  aria-controls="barber-panel"
+                >
+                  <span class="filter-name">Barbero:</span>
+                  <span class="filter-value" id="barber-value">Carlos</span>
+                  <span class="filter-caret" aria-hidden="true">▾</span>
+                </button>
+                <div class="filter-panel" id="barber-panel" role="group" aria-label="Barbero" hidden>
+                  <label class="filter-check">
+                    <input type="radio" name="barbero" value="Carlos" checked />
+                    <span class="dot" style="background: var(--color-barber-carlos)"></span>
+                    Carlos
+                  </label>
+                  <label class="filter-check">
+                    <input type="radio" name="barbero" value="Diego" />
+                    <span class="dot" style="background: var(--color-barber-diego)"></span>
+                    Diego
+                  </label>
+                  <label class="filter-check">
+                    <input type="radio" name="barbero" value="Miguel" />
+                    <span class="dot" style="background: var(--color-barber-miguel)"></span>
+                    Miguel
+                  </label>
+                </div>
+              </div>
+
+              <div class="filter" id="service-filter">
+                <button
+                  type="button"
+                  class="filter-trigger"
+                  id="service-trigger"
+                  aria-expanded="false"
+                  aria-controls="service-panel"
+                >
+                  <span class="filter-name">Servicio:</span>
+                  <span class="filter-value" id="service-value">Corte</span>
+                  <span class="filter-caret" aria-hidden="true">▾</span>
+                </button>
+                <div class="filter-panel" id="service-panel" role="group" aria-label="Servicio" hidden>
+                  <label class="filter-check">
+                    <input type="radio" name="servicio" value="Corte" checked />
+                    Corte
+                  </label>
+                  <label class="filter-check">
+                    <input type="radio" name="servicio" value="Corte + Barba" />
+                    Corte + Barba
+                  </label>
+                  <label class="filter-check">
+                    <input type="radio" name="servicio" value="Barba" />
+                    Barba
+                  </label>
+                  <label class="filter-check">
+                    <input type="radio" name="servicio" value="Cejas" />
+                    Cejas
+                  </label>
+                </div>
+              </div>
+            </div>
+
+            <fieldset class="chips">
+              <legend>Hora</legend>
+              <!-- free slots are injected here (innerHTML → global classes) -->
+              <div class="time-grid" id="time-grid"></div>
+              <p class="empty" id="time-empty" hidden>Sin horas libres este día</p>
+            </fieldset>
+
+            <div class="bottom-bar">
+              <span class="summary" id="form-summary"></span>
+              <button type="submit" class="submit" id="save-btn" disabled>Guardar cita</button>
+            </div>
+          </div>
+        </form>
+
+        <section class="success" id="success" hidden aria-live="polite">
+          <p class="success-mark">✓ Cita agendada correctamente</p>
+
+          <div class="actions">
+            <button type="button" class="secondary" id="details-btn">Ver detalles</button>
+            <a class="secondary" href={`${base}/admin/`}>Volver al inicio</a>
+          </div>
+
+          <div class="details" id="details-panel" hidden>
+            <!-- Linked row "Nombre · teléfono" → same search as step 1. -->
+            <div class="client-chip" id="detail-client-row">
+              <span class="client-chip-text" id="detail-client-text"></span>
+              <button type="button" class="linklike" id="detail-change-btn">Cambiar</button>
+            </div>
+
+            <div class="search" id="detail-search" hidden>
+              <label for="detail-query">Buscar cliente</label>
+              <input
+                class="search-input"
+                type="search"
+                id="detail-query"
+                placeholder="Nombre o teléfono"
+                autocomplete="off"
+              />
+              <div class="search-results" id="detail-results" hidden>
+                <!-- result rows are injected here (innerHTML → global classes) -->
+                <div class="search-rows" id="detail-rows"></div>
+              </div>
+            </div>
+
+            <div class="filters">
+              <div class="filter" id="detail-service-filter">
+                <button
+                  type="button"
+                  class="filter-trigger"
+                  id="detail-service-trigger"
+                  aria-expanded="false"
+                  aria-controls="detail-service-panel"
+                >
+                  <span class="filter-name">Servicio:</span>
+                  <span class="filter-value" id="detail-service-value">Corte</span>
+                  <span class="filter-caret" aria-hidden="true">▾</span>
+                </button>
+                <div
+                  class="filter-panel"
+                  id="detail-service-panel"
+                  role="group"
+                  aria-label="Servicio"
+                  hidden
+                >
+                  <label class="filter-check">
+                    <input type="radio" name="detail-servicio" value="Corte" />
+                    Corte
+                  </label>
+                  <label class="filter-check">
+                    <input type="radio" name="detail-servicio" value="Corte + Barba" />
+                    Corte + Barba
+                  </label>
+                  <label class="filter-check">
+                    <input type="radio" name="detail-servicio" value="Barba" />
+                    Barba
+                  </label>
+                  <label class="filter-check">
+                    <input type="radio" name="detail-servicio" value="Cejas" />
+                    Cejas
+                  </label>
+                </div>
+              </div>
+
+              <div class="filter" id="detail-barber-filter">
+                <button
+                  type="button"
+                  class="filter-trigger"
+                  id="detail-barber-trigger"
+                  aria-expanded="false"
+                  aria-controls="detail-barber-panel"
+                >
+                  <span class="filter-name">Barbero:</span>
+                  <span class="filter-value" id="detail-barber-value">Carlos</span>
+                  <span class="filter-caret" aria-hidden="true">▾</span>
+                </button>
+                <div
+                  class="filter-panel"
+                  id="detail-barber-panel"
+                  role="group"
+                  aria-label="Barbero"
+                  hidden
+                >
+                  <label class="filter-check">
+                    <input type="radio" name="detail-barbero" value="Carlos" />
+                    <span class="dot" style="background: var(--color-barber-carlos)"></span>
+                    Carlos
+                  </label>
+                  <label class="filter-check">
+                    <input type="radio" name="detail-barbero" value="Diego" />
+                    <span class="dot" style="background: var(--color-barber-diego)"></span>
+                    Diego
+                  </label>
+                  <label class="filter-check">
+                    <input type="radio" name="detail-barbero" value="Miguel" />
+                    <span class="dot" style="background: var(--color-barber-miguel)"></span>
+                    Miguel
+                  </label>
+                </div>
+              </div>
+
+              <div class="filter" id="detail-status-filter">
+                <button
+                  type="button"
+                  class="filter-trigger"
+                  id="detail-status-trigger"
+                  aria-expanded="false"
+                  aria-controls="detail-status-panel"
+                >
+                  <span class="filter-name">Estado:</span>
+                  <span class="filter-value" id="detail-status-value">Pendiente</span>
+                  <span class="filter-caret" aria-hidden="true">▾</span>
+                </button>
+                <div
+                  class="filter-panel"
+                  id="detail-status-panel"
+                  role="group"
+                  aria-label="Estado"
+                  hidden
+                >
+                  <label class="filter-check">
+                    <input type="radio" name="detail-estado" value="Pendiente" />
+                    Pendiente
+                  </label>
+                  <label class="filter-check">
+                    <input type="radio" name="detail-estado" value="Confirmada" />
+                    Confirmada
+                  </label>
+                  <label class="filter-check">
+                    <input type="radio" name="detail-estado" value="Atendido" />
+                    Atendido
+                  </label>
+                  <label class="filter-check">
+                    <input type="radio" name="detail-estado" value="Cancelado" />
+                    Cancelado
+                  </label>
+                </div>
+              </div>
+            </div>
+
+            <fieldset class="chips">
+              <legend>Fecha</legend>
+              <div class="date-nav">
+                <button
+                  type="button"
+                  class="date-page"
+                  id="detail-date-prev"
+                  aria-label="Días anteriores">‹</button
+                >
+                <div class="date-strip" id="detail-date-strip"></div>
+                <button
+                  type="button"
+                  class="date-page"
+                  id="detail-date-next"
+                  aria-label="Días siguientes">›</button
+                >
+              </div>
+            </fieldset>
+
+            <fieldset class="chips">
+              <legend>Hora</legend>
+              <!-- free slots are injected here (innerHTML → global classes) -->
+              <div class="time-grid" id="detail-time-grid"></div>
+              <p class="empty" id="detail-time-empty" hidden>Sin horas libres este día</p>
+            </fieldset>
+
+            <button type="button" class="submit" id="detail-save-btn">Guardar cambios</button>
+            <p class="saved" id="detail-saved" hidden>Datos actualizados</p>
+          </div>
+        </section>
+      </div>
+    </div>
+
+    <script is:inline>
+      if (sessionStorage.getItem('webbys_admin') !== '1') {
+        location.replace('/Webbyss/login');
+      }
+    </script>
+
+    <script>
+      import {
+        appendAppointment,
+        loadAppointments,
+        readAppointments,
+        saveAppointments,
+        dayKey,
+        todayKey,
+        parseKey,
+        hhmm,
+        escapeHtml,
+        OPEN_HOUR,
+        CLOSE_HOUR,
+      } from '../../scripts/appointments.js';
+      import { seedClients, searchClients, appendClient } from '../../scripts/clients.js';
+
+      const form = document.getElementById('cita-form');
+      const success = document.getElementById('success');
+      const step1 = document.getElementById('step-1');
+      const step2 = document.getElementById('step-2');
+      const dateStrip = document.getElementById('date-strip');
+      const datePrev = document.getElementById('date-prev');
+      const dateNext = document.getElementById('date-next');
+      const timeGrid = document.getElementById('time-grid');
+      const timeEmpty = document.getElementById('time-empty');
+      const summary = document.getElementById('form-summary');
+      const continueBtn = document.getElementById('continue-btn');
+      const saveBtn = document.getElementById('save-btn');
+      const step2Client = document.getElementById('step2-client');
+      const backClientBtn = document.getElementById('back-client-btn');
+
+      const searchBox = document.getElementById('client-search');
+      const query = document.getElementById('client-query');
+      const results = document.getElementById('client-results');
+      const rows = document.getElementById('client-rows');
+      const registraloBtn = document.getElementById('registralo-btn');
+
+      const viewSearch = document.getElementById('view-search');
+      const viewAdd = document.getElementById('view-add');
+      const viewConfirm = document.getElementById('view-confirm');
+      const newName = document.getElementById('new-client-name');
+      const newPhone = document.getElementById('new-client-phone');
+      const saveClientBtn = document.getElementById('save-client-btn');
+      const backSearchBtn = document.getElementById('back-search-btn');
+      const continueAgendaBtn = document.getElementById('continue-agenda-btn');
+      const errorCliente = document.getElementById('error-cliente');
+      const errorTelefono = document.getElementById('error-telefono');
+      const shareLink = document.getElementById('share-link');
+      const copyBtn = document.getElementById('copy-btn');
+      const copyHint = document.getElementById('copy-hint');
+      const selectedClient = document.getElementById('selected-client');
+      const selectedText = document.getElementById('selected-client-text');
+      const changeClientBtn = document.getElementById('change-client-btn');
+
+      const barberTrigger = document.getElementById('barber-trigger');
+      const barberPanel = document.getElementById('barber-panel');
+      const serviceTrigger = document.getElementById('service-trigger');
+      const servicePanel = document.getElementById('service-panel');
+
+      const detailsBtn = document.getElementById('details-btn');
+      const detailsPanel = document.getElementById('details-panel');
+      const detailSaved = document.getElementById('detail-saved');
+      const detailSaveBtn = document.getElementById('detail-save-btn');
+
+      const detailChangeBtn = document.getElementById('detail-change-btn');
+      const detailClientText = document.getElementById('detail-client-text');
+      const detailSearch = document.getElementById('detail-search');
+      const detailQuery = document.getElementById('detail-query');
+      const detailResults = document.getElementById('detail-results');
+      const detailRows = document.getElementById('detail-rows');
+      const detailDateStrip = document.getElementById('detail-date-strip');
+      const detailDatePrev = document.getElementById('detail-date-prev');
+      const detailDateNext = document.getElementById('detail-date-next');
+      const detailTimeGrid = document.getElementById('detail-time-grid');
+      const detailTimeEmpty = document.getElementById('detail-time-empty');
+      const detailServiceTrigger = document.getElementById('detail-service-trigger');
+      const detailServicePanel = document.getElementById('detail-service-panel');
+      const detailBarberTrigger = document.getElementById('detail-barber-trigger');
+      const detailBarberPanel = document.getElementById('detail-barber-panel');
+      const detailStatusTrigger = document.getElementById('detail-status-trigger');
+      const detailStatusPanel = document.getElementById('detail-status-panel');
+      const detailPanels = [
+        [detailServiceTrigger, detailServicePanel],
+        [detailBarberTrigger, detailBarberPanel],
+        [detailStatusTrigger, detailStatusPanel],
+      ];
+
+      const DAY_ABBR = ['dom', 'lun', 'mar', 'mié', 'jue', 'vie', 'sáb'];
+      const OPEN_MIN = OPEN_HOUR * 60;
+      const CLOSE_MIN = CLOSE_HOUR * 60;
+      // Date strip: 5 visible days, paged ‹ › inside the existing 14-day horizon.
+      const HORIZON_DAYS = 14;
+      const PAGE_DAYS = 5;
+
+      const pad2 = (value) => String(value).padStart(2, '0');
+      const timeLabel = (minutes) =>
+        `${pad2(Math.floor(minutes / 60))}:${pad2(minutes % 60)}`;
+      const toMinutes = (time) =>
+        Number(time.slice(0, 2)) * 60 + Number(time.slice(3, 5));
+
+      // Wizard state: client comes from step 1, the rest from step 2.
+      const state = { client: null, date: todayKey(), time: '' };
+      // Detail editor state: the appointment being edited (Fase 7).
+      const edit = { client: '', phone: '', date: '', time: '', service: '', barber: '', status: '' };
+      let datePage = 0;
+      let detailPage = 0;
+      let lastSavedId = '';
+      let pendingClient = null;
+
+      const checkedValue = (name) =>
+        document.querySelector(`input[name="${name}"]:checked`)?.value || '';
+
+      seedClients(); // demo clients so the search box is never empty on first use
+      loadAppointments(); // same first-visit seed the agenda relies on
+
+      // ─── Steps ────────────────────────────────────────────────
+      function showStep(step) {
+        step1.hidden = step !== 1;
+        step2.hidden = step !== 2;
+      }
+
+      // Step 1 has three views: search (default), add client, share link.
+      function showStep1View(view) {
+        viewSearch.hidden = view !== 'search';
+        viewAdd.hidden = view !== 'add';
+        viewConfirm.hidden = view !== 'confirm';
+      }
+
+      // ─── Step 1: client search (SEARCH / COMBOBOX contract) ───
+      // Shared by step 1 and the detail editor (both inject global classes).
+      const resultRows = (value) =>
+        searchClients(value)
+          .map(
+            (client) => `
+            <button type="button" class="search-item" data-id="${escapeHtml(client.id)}">
+              <span class="search-item-name">${escapeHtml(client.name)}</span>
+              <span class="search-item-phone">${escapeHtml(client.phone)}</span>
+            </button>`,
+          )
+          .join('');
+
+      function renderResults() {
+        rows.innerHTML = resultRows(query.value);
+        results.hidden = false;
+      }
+
+      function renderDetailResults() {
+        detailRows.innerHTML = resultRows(detailQuery.value);
+        detailResults.hidden = false;
+      }
+
+      function closeResults() {
+        results.hidden = true;
+      }
+
+      function pickClient(client) {
+        state.client = client;
+        selectedText.textContent = `${client.name} · ${client.phone}`;
+        step2Client.textContent = selectedText.textContent;
+        selectedClient.hidden = false;
+        continueBtn.disabled = false;
+        closeResults();
+      }
+
+      query.addEventListener('focus', renderResults);
+      query.addEventListener('input', renderResults);
+      // Chromium clears a search input on Escape and dispatches `input`
+      // afterwards, which would re-open the panel we just closed.
+      query.addEventListener('keydown', (event) => {
+        if (event.key === 'Escape') event.preventDefault();
+      });
+
+      results.addEventListener('click', (event) => {
+        const item = event.target.closest('.search-item');
+        if (!item) return;
+        const client = searchClients('').find((entry) => entry.id === item.dataset.id);
+        if (client) pickClient(client);
+      });
+
+      registraloBtn.addEventListener('click', () => {
+        showStep1View('add');
+        newName.focus();
+      });
+
+      backSearchBtn.addEventListener('click', () => {
+        errorCliente.hidden = true;
+        errorTelefono.hidden = true;
+        showStep1View('search');
+        query.focus();
+        renderResults();
+      });
+
+      saveClientBtn.addEventListener('click', () => {
+        const name = newName.value.trim();
+        const phone = newPhone.value.trim();
+        errorCliente.hidden = name !== '';
+        errorTelefono.hidden = phone !== '';
+        if (name === '' || phone === '') return;
+
+        pendingClient = appendClient({ name, phone });
+        newName.value = '';
+        newPhone.value = '';
+        errorCliente.hidden = true;
+        errorTelefono.hidden = true;
+
+        // ponytail: query-param link is demo-grade — replace with a single-use token when Supabase lands
+        shareLink.value = `${location.origin}/Webbyss/registro?nombre=${encodeURIComponent(name)}&tel=${encodeURIComponent(phone)}`;
+        copyBtn.textContent = 'Copiar link';
+        copyHint.hidden = true;
+        showStep1View('confirm');
+      });
+
+      continueAgendaBtn.addEventListener('click', () => {
+        if (!pendingClient) return;
+        pickClient(pendingClient);
+        showStep(2);
+        renderTimeGrid();
+        updateSummary();
+      });
+
+      changeClientBtn.addEventListener('click', () => {
+        query.value = '';
+        query.focus();
+        renderResults();
+      });
+
+      continueBtn.addEventListener('click', () => {
+        if (!state.client) return;
+        step2Client.textContent = selectedText.textContent;
+        showStep(2);
+        renderTimeGrid();
+        updateSummary();
+      });
+
+      backClientBtn.addEventListener('click', () => {
+        showStep(1);
+        showStep1View('search');
+        query.focus();
+        renderResults();
+      });
+
+      // ─── Date strip (5 days per page, 14-day horizon): one builder
+      // shared by step 2 and the detail editor (Fase 7) ──────────
+      function renderStrip(container, prevBtn, nextBtn, page, selectedKey) {
+        const start = parseKey(todayKey());
+        const offset = page * PAGE_DAYS;
+        // Last page shows the tail of the horizon, not a full row.
+        const count = Math.min(PAGE_DAYS, HORIZON_DAYS - offset);
+
+        container.innerHTML = Array.from({ length: count }, (_, index) => {
+          const date = new Date(start);
+          date.setDate(start.getDate() + offset + index);
+          const key = dayKey(date);
+          return `
+            <button
+              type="button"
+              class="date-chip${key === selectedKey ? ' is-selected' : ''}"
+              data-key="${key}"
+              aria-pressed="${key === selectedKey}"
+            >
+              <span class="date-chip-name">${DAY_ABBR[date.getDay()]}</span>
+              <span class="date-chip-num">${date.getDate()}</span>
+            </button>`;
+        }).join('');
+
+        // Fase 8: both arrows always render; the edge one is disabled so
+        // the row stays symmetric and the strip never shifts sideways.
+        prevBtn.disabled = page === 0;
+        nextBtn.disabled = (page + 1) * PAGE_DAYS >= HORIZON_DAYS;
+      }
+
+      function renderDateStrip() {
+        renderStrip(dateStrip, datePrev, dateNext, datePage, state.date);
+      }
+
+      function renderDetailStrip() {
+        renderStrip(detailDateStrip, detailDatePrev, detailDateNext, detailPage, edit.date);
+      }
+
+      function selectDate(key) {
+        state.date = key;
+        dateStrip.querySelectorAll('.date-chip').forEach((chip) => {
+          const selected = chip.dataset.key === key;
+          chip.classList.toggle('is-selected', selected);
+          chip.setAttribute('aria-pressed', String(selected));
+        });
+        clearTime();
+        renderTimeGrid();
+        updateSummary();
+      }
+
+      function pageDates(nextPage) {
+        datePage = nextPage;
+        renderDateStrip();
+        // Keep a selected date only when the new page still shows it.
+        const chips = [...dateStrip.querySelectorAll('.date-chip')];
+        const visible = chips.some((chip) => chip.dataset.key === state.date);
+        const key = visible ? state.date : chips[0]?.dataset.key;
+        if (key) selectDate(key);
+      }
+
+      datePrev.addEventListener('click', () => {
+        if (datePage > 0) pageDates(datePage - 1);
+      });
+
+      dateNext.addEventListener('click', () => {
+        if ((datePage + 1) * PAGE_DAYS < HORIZON_DAYS) pageDates(datePage + 1);
+      });
+
+      dateStrip.addEventListener('click', (event) => {
+        const chip = event.target.closest('.date-chip');
+        if (!chip) return;
+        selectDate(chip.dataset.key);
+      });
+
+      // ─── Free hours (same occupancy rule as the agenda's
+      // "Disponible" view: an appointment — Cancelado included — holds its
+      // 30-min slot for that barber). Today only offers slots after now.
+      // `ignoreId` lets the detail editor keep its own appointment's slot
+      // selectable instead of seeing it as somebody else's booking. ──
+      function freeSlots(date, barber, ignoreId) {
+        const busy = readAppointments()
+          .filter(
+            (appointment) =>
+              appointment.id !== ignoreId &&
+              appointment.date === date &&
+              appointment.barber === barber,
+          )
+          .map((appointment) => toMinutes(appointment.time));
+
+        const isToday = date === todayKey();
+        const now = hhmm();
+
+        const free = [];
+        // Range matches the form's 09:00–19:00 (inclusive) grid; the occupancy
+        // rule is agenda's: an appointment holds [t, t+30) for that barber.
+        for (let minutes = OPEN_MIN; minutes <= CLOSE_MIN; minutes += 30) {
+          const slot = timeLabel(minutes);
+          if (busy.some((taken) => taken >= minutes && taken < minutes + 30)) continue;
+          if (isToday && !(slot > now)) continue;
+          free.push(slot);
+        }
+        return free;
+      }
+
+      const timeChips = (slots, selected) =>
+        slots
+          .map(
+            (time) => `
+            <button
+              type="button"
+              class="time-chip${time === selected ? ' is-selected' : ''}"
+              data-time="${time}"
+              aria-pressed="${time === selected}"
+            >
+              ${time}
+            </button>`,
+          )
+          .join('');
+
+      function renderTimeGrid() {
+        const free = freeSlots(state.date, checkedValue('barbero'), '');
+        timeEmpty.hidden = free.length > 0;
+        timeGrid.innerHTML = timeChips(free, state.time);
+      }
+
+      function renderDetailTimeGrid() {
+        const free = freeSlots(edit.date, edit.barber, lastSavedId);
+        detailTimeEmpty.hidden = free.length > 0;
+        detailTimeGrid.innerHTML = timeChips(free, edit.time);
+      }
+
+      function clearTime() {
+        state.time = '';
+        saveBtn.disabled = true;
+      }
+
+      timeGrid.addEventListener('click', (event) => {
+        const chip = event.target.closest('.time-chip');
+        if (!chip) return;
+        state.time = chip.dataset.time;
+        timeGrid.querySelectorAll('.time-chip').forEach((entry) => {
+          const selected = entry === chip;
+          entry.classList.toggle('is-selected', selected);
+          entry.setAttribute('aria-pressed', String(selected));
+        });
+        saveBtn.disabled = false;
+        updateSummary();
+      });
+
+      function updateSummary() {
+        const parts = [checkedValue('servicio'), checkedValue('barbero'), state.date];
+        if (state.time) parts.push(state.time);
+        summary.textContent = parts.join(' · ');
+      }
+
+      // ─── M3 single-select dropdowns (same behavior as agenda) ──
+      function closePanel(trigger, panel) {
+        panel.hidden = true;
+        trigger.setAttribute('aria-expanded', 'false');
+      }
+
+      function togglePanel(trigger, panel) {
+        const open = trigger.getAttribute('aria-expanded') === 'true';
+        trigger.setAttribute('aria-expanded', String(!open));
+        panel.hidden = open;
+      }
+
+      barberTrigger.addEventListener('click', () => togglePanel(barberTrigger, barberPanel));
+      serviceTrigger.addEventListener('click', () => togglePanel(serviceTrigger, servicePanel));
+
+      barberPanel.addEventListener('change', (event) => {
+        const input = event.target.closest('input[name="barbero"]');
+        if (!input) return;
+        document.getElementById('barber-value').textContent = input.value;
+        closePanel(barberTrigger, barberPanel);
+        clearTime();
+        renderTimeGrid();
+        updateSummary();
+      });
+
+      servicePanel.addEventListener('change', (event) => {
+        const input = event.target.closest('input[name="servicio"]');
+        if (!input) return;
+        document.getElementById('service-value').textContent = input.value;
+        closePanel(serviceTrigger, servicePanel);
+        updateSummary();
+      });
+
+      // ─── Detail editor (Fase 7): the same search / strip / grid /
+      // M3 dropdowns as step 2, driven by the saved appointment ────
+
+      // Linked row "Nombre · teléfono" + "Cambiar" → re-pick the client.
+      detailChangeBtn.addEventListener('click', () => {
+        detailSearch.hidden = false;
+        detailQuery.value = '';
+        detailQuery.focus();
+        renderDetailResults();
+      });
+
+      detailQuery.addEventListener('focus', renderDetailResults);
+      detailQuery.addEventListener('input', renderDetailResults);
+      detailQuery.addEventListener('keydown', (event) => {
+        if (event.key === 'Escape') event.preventDefault();
+      });
+
+      detailResults.addEventListener('click', (event) => {
+        const item = event.target.closest('.search-item');
+        if (!item) return;
+        const client = searchClients('').find((entry) => entry.id === item.dataset.id);
+        if (!client) return;
+        edit.client = client.name;
+        edit.phone = client.phone;
+        detailClientText.textContent = `${client.name} · ${client.phone}`;
+        detailSearch.hidden = true;
+        detailQuery.value = '';
+      });
+
+      // Paging never re-selects a date behind the user's back: the
+      // appointment keeps it until a visible chip is picked.
+      detailDatePrev.addEventListener('click', () => {
+        if (detailPage > 0) {
+          detailPage -= 1;
+          renderDetailStrip();
+        }
+      });
+
+      detailDateNext.addEventListener('click', () => {
+        if ((detailPage + 1) * PAGE_DAYS < HORIZON_DAYS) {
+          detailPage += 1;
+          renderDetailStrip();
+        }
+      });
+
+      detailDateStrip.addEventListener('click', (event) => {
+        const chip = event.target.closest('.date-chip');
+        if (!chip) return;
+        edit.date = chip.dataset.key;
+        // New day → pick the hour again, exactly like step 2.
+        edit.time = '';
+        detailSaveBtn.disabled = true;
+        renderDetailStrip();
+        renderDetailTimeGrid();
+      });
+
+      detailTimeGrid.addEventListener('click', (event) => {
+        const chip = event.target.closest('.time-chip');
+        if (!chip) return;
+        edit.time = chip.dataset.time;
+        detailTimeGrid.querySelectorAll('.time-chip').forEach((entry) => {
+          const selected = entry === chip;
+          entry.classList.toggle('is-selected', selected);
+          entry.setAttribute('aria-pressed', String(selected));
+        });
+        detailSaveBtn.disabled = false;
+      });
+
+      // Single-select dropdown: displayed value and checked radio in sync.
+      function setDetailDropdown(name, value) {
+        document.getElementById(`${name}-value`).textContent = value;
+        const input = document.querySelector(`#${name}-panel input[value="${value}"]`);
+        if (input) input.checked = true;
+      }
+
+      for (const [trigger, panel] of detailPanels) {
+        trigger.addEventListener('click', () => togglePanel(trigger, panel));
+      }
+
+      detailServicePanel.addEventListener('change', (event) => {
+        const input = event.target.closest('input[type="radio"]');
+        if (!input) return;
+        edit.service = input.value;
+        document.getElementById('detail-service-value').textContent = input.value;
+        closePanel(detailServiceTrigger, detailServicePanel);
+      });
+
+      detailStatusPanel.addEventListener('change', (event) => {
+        const input = event.target.closest('input[type="radio"]');
+        if (!input) return;
+        edit.status = input.value;
+        document.getElementById('detail-status-value').textContent = input.value;
+        closePanel(detailStatusTrigger, detailStatusPanel);
+      });
+
+      detailBarberPanel.addEventListener('change', (event) => {
+        const input = event.target.closest('input[type="radio"]');
+        if (!input) return;
+        edit.barber = input.value;
+        document.getElementById('detail-barber-value').textContent = input.value;
+        closePanel(detailBarberTrigger, detailBarberPanel);
+        // Occupancy depends on the barber → re-pick the hour (step-2 rule).
+        edit.time = '';
+        detailSaveBtn.disabled = true;
+        renderDetailTimeGrid();
+      });
+
+      // ─── Dismissal: outside tap closes everything, Escape closes the
+      // search panel first, then any open dropdown (refocusing its trigger) ─
+      const allPanels = [
+        [barberTrigger, barberPanel],
+        [serviceTrigger, servicePanel],
+        ...detailPanels,
+      ];
+
+      document.addEventListener('click', (event) => {
+        if (!(event.target instanceof Element)) return;
+        // "Volver a buscar"/"Cambiar" reopen the panel themselves; the same
+        // click must not close it right after.
+        const reopensResults = event.target.closest(
+          '#back-search-btn, #change-client-btn, #detail-change-btn',
+        );
+        if (!searchBox.contains(event.target) && !reopensResults) closeResults();
+        if (!detailSearch.contains(event.target) && !reopensResults)
+          detailResults.hidden = true;
+        for (const [trigger, panel] of allPanels) {
+          if (
+            !panel.hidden &&
+            !panel.contains(event.target) &&
+            !trigger.contains(event.target)
+          ) {
+            closePanel(trigger, panel);
+          }
+        }
+      });
+
+      document.addEventListener('keydown', (event) => {
+        if (event.key !== 'Escape') return;
+        if (!results.hidden) {
+          closeResults();
+          return;
+        }
+        if (!detailResults.hidden) {
+          detailResults.hidden = true;
+          return;
+        }
+        if (!detailSearch.hidden) {
+          detailSearch.hidden = true;
+          return;
+        }
+        for (const [trigger, panel] of allPanels) {
+          if (!panel.hidden) {
+            closePanel(trigger, panel);
+            trigger.focus();
+          }
+        }
+      });
+
+      // ─── Save appointment ─────────────────────────────────────
+      form.addEventListener('submit', (event) => {
+        event.preventDefault();
+
+        const client = state.client;
+        const name = client ? client.name.trim() : '';
+        const phone = client ? client.phone.trim() : '';
+        if (name === '' || phone === '' || state.time === '') return;
+
+        const appointment = {
+          id: typeof crypto.randomUUID === 'function' ? crypto.randomUUID() : String(Date.now()),
+          date: state.date,
+          time: state.time,
+          client: name,
+          phone,
+          service: checkedValue('servicio'),
+          barber: checkedValue('barbero'),
+          status: 'Pendiente',
+        };
+
+        appendAppointment(appointment);
+        lastSavedId = appointment.id;
+
+        form.hidden = true;
+        success.hidden = false;
+        detailsPanel.hidden = true;
+        detailSaved.hidden = true;
+        success.scrollIntoView({ block: 'nearest' });
+      });
+
+      copyBtn.addEventListener('click', async () => {
+        try {
+          await navigator.clipboard.writeText(shareLink.value);
+          copyBtn.textContent = '¡Copiado!';
+          copyHint.hidden = true;
+        } catch {
+          // Clipboard blocked: keep the readonly input selectable for a manual copy.
+          shareLink.focus();
+          shareLink.select();
+          copyHint.hidden = false;
+        }
+      });
+
+      // ─── Success: detail panel (edit + persist) ───────────────
+      function fillDetails() {
+        const appointment = readAppointments().find((entry) => entry.id === lastSavedId);
+        if (!appointment) return;
+
+        edit.client = appointment.client;
+        edit.phone = appointment.phone;
+        edit.date = appointment.date;
+        edit.time = appointment.time;
+        edit.service = appointment.service;
+        edit.barber = appointment.barber;
+        edit.status = appointment.status;
+
+        detailClientText.textContent = `${appointment.client} · ${appointment.phone}`;
+        detailSearch.hidden = true;
+        detailResults.hidden = true;
+        detailQuery.value = '';
+
+        // Open the strip on the page that holds the appointment's date.
+        const offset = Math.round(
+          (parseKey(appointment.date) - parseKey(todayKey())) / 86400000,
+        );
+        const lastPage = Math.floor((HORIZON_DAYS - 1) / PAGE_DAYS);
+        detailPage = Math.max(0, Math.min(Math.floor(offset / PAGE_DAYS), lastPage));
+
+        setDetailDropdown('detail-service', appointment.service);
+        setDetailDropdown('detail-barber', appointment.barber);
+        setDetailDropdown('detail-status', appointment.status);
+
+        renderDetailStrip();
+        renderDetailTimeGrid();
+        detailSaveBtn.disabled = edit.time === '';
+        detailSaved.hidden = true;
+      }
+
+      detailsBtn.addEventListener('click', () => {
+        detailsPanel.hidden = !detailsPanel.hidden;
+        if (!detailsPanel.hidden) fillDetails();
+      });
+
+      detailSaveBtn.addEventListener('click', () => {
+        const list = readAppointments();
+        const index = list.findIndex((entry) => entry.id === lastSavedId);
+        if (index < 0 || edit.time === '') return;
+
+        list[index] = {
+          ...list[index],
+          client: edit.client.trim(),
+          phone: edit.phone.trim(),
+          date: edit.date,
+          time: edit.time,
+          service: edit.service,
+          barber: edit.barber,
+          status: edit.status,
+        };
+        saveAppointments(list);
+        detailSaved.hidden = false;
+      });
+
+      // ─── Init ─────────────────────────────────────────────────
+      renderDateStrip();
+      selectDate(todayKey());
+      showStep1View('search');
+      showStep(1);
+    </script>
+  </body>
+</html>
+
+<style>
+  /* The hidden attribute must win over the display our own rules set
+     (the chip card and the floating search are display:flex/flex).
+     Astro ships this in this page's own stylesheet, so only this page
+     is affected. */
+  [hidden] {
+    display: none !important;
+  }
+
+  .page {
+    box-sizing: border-box;
+    min-height: 100vh;
+    min-height: 100dvh;
+    padding: var(--space-4);
+    font-family: var(--font-atkinson, sans-serif);
+    color: var(--color-text);
+    background: var(--color-bg);
+  }
+
+  .shell {
+    width: 100%;
+    max-width: 640px;
+    margin: 0 auto;
+  }
+
+  .topbar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: var(--space-3);
+    margin-bottom: var(--space-4);
+  }
+
+  .back {
+    font-size: 0.9rem;
+    text-decoration: none;
+    color: var(--color-accent);
+    border-bottom: 1px solid var(--color-accent-line);
+    padding-bottom: 1px;
+  }
+
+  .back:hover {
+    color: var(--color-accent-hover);
+    border-color: var(--color-accent-hover);
+  }
+
+  .back:focus-visible {
+    outline: 2px solid var(--color-focus-ring);
+    outline-offset: 3px;
+    border-radius: var(--radius-sm);
+  }
+
+  .chip {
+    padding: 0.25rem 0.7rem;
+    font-size: 0.75rem;
+    font-weight: 700;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: var(--color-accent);
+    background: var(--color-accent-glow);
+    border: 1px solid var(--color-accent-line);
+    border-radius: var(--radius-lg);
+  }
+
+  .title {
+    margin: 0 0 var(--space-4);
+    font-family: var(--font-display, serif);
+    font-weight: 700;
+    font-size: clamp(2rem, 8vw, 2.6rem);
+    line-height: 1;
+    color: var(--color-heading);
+  }
+
+  .info {
+    margin: 0 0 var(--space-4);
+    padding: var(--space-3);
+    font-size: 0.9rem;
+    color: var(--color-text);
+    background: color-mix(in srgb, var(--color-accent) 10%, transparent);
+    border: 1px solid var(--color-accent-line);
+    border-radius: var(--radius-lg);
+  }
+
+  fieldset {
+    margin: 0 0 var(--space-4);
+    padding: var(--space-4);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-lg);
+    background: var(--color-surface);
+  }
+
+  legend {
+    padding: 0 var(--space-2);
+    font-size: 0.78rem;
+    font-weight: 700;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: var(--color-text-muted);
+  }
+
+  /* Labels around the combobox. */
+  .search label {
+    display: block;
+    margin-bottom: 0.45rem;
+    font-size: 0.8rem;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--color-text-muted);
+  }
+
+  /* Field rows: add-client form + share link. */
+  .field {
+    margin-bottom: var(--space-3);
+  }
+
+  .field label {
+    display: block;
+    margin-bottom: 0.45rem;
+    font-size: 0.8rem;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--color-text-muted);
+  }
+
+  .field input {
+    box-sizing: border-box;
+    width: 100%;
+    min-height: 44px;
+    padding: 0.75rem 0.9rem;
+    font-family: inherit;
+    font-size: 1rem;
+    color: var(--color-field-text);
+    background: var(--color-field);
+    border: 1px solid var(--color-field-border);
+    border-radius: var(--radius-lg);
+    transition:
+      border-color 0.18s ease,
+      box-shadow 0.18s ease;
+  }
+
+  .field input:focus-visible {
+    outline: none;
+    border-color: var(--color-accent);
+    box-shadow: 0 0 0 3px var(--color-accent-ring);
+  }
+
+  .field-error {
+    margin: 0.35rem 0 0;
+    font-size: 0.85rem;
+    color: var(--color-accent);
+  }
+
+  /* Selected client chip (step 1) + step 2 header. */
+  .client-chip,
+  .client-head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: var(--space-3);
+    flex-wrap: wrap;
+    box-sizing: border-box;
+    width: 100%;
+    padding: var(--space-3);
+    background: color-mix(in srgb, var(--color-accent) 10%, transparent);
+    border: 1px solid var(--color-accent-line);
+    border-radius: var(--radius-lg);
+  }
+
+  .client-chip-text,
+  .client-head-name {
+    font-weight: 700;
+    color: var(--color-heading);
+    overflow-wrap: anywhere;
+  }
+
+  .client-head {
+    margin-bottom: var(--space-4);
+    background: var(--color-surface);
+    border-color: var(--color-border);
+  }
+
+  /* Step 1: the chip is a card of its own, separated by the search
+     card's bottom margin. In the detail editor it heads the panel, so
+     there it only needs the gap below itself. */
+  .details .client-chip {
+    margin-bottom: var(--space-4);
+  }
+
+  .chips {
+    padding: var(--space-3);
+    border: 1px solid var(--color-border);
+    background: transparent;
+  }
+
+  .date-nav {
+    display: flex;
+    align-items: stretch;
+    gap: var(--space-2);
+  }
+
+  .date-page {
+    flex: 0 0 auto;
+    width: 36px;
+    font-family: inherit;
+    font-size: 1.3rem;
+    line-height: 1;
+    color: var(--color-text-muted);
+    background: var(--color-field);
+    border: 1px solid var(--color-field-border);
+    border-radius: var(--radius-lg);
+    cursor: pointer;
+    transition:
+      color 0.18s ease,
+      border-color 0.18s ease;
+  }
+
+  .date-page:hover:not(:disabled) {
+    color: var(--color-accent);
+    border-color: var(--color-accent);
+  }
+
+  .date-page:focus-visible {
+    outline: 2px solid var(--color-focus-ring);
+    outline-offset: 2px;
+  }
+
+  /* Edge pages keep the arrow visible but inert (Fase 8). */
+  .date-page:disabled {
+    opacity: 0.4;
+    cursor: default;
+  }
+
+  .date-strip {
+    display: flex;
+    flex: 1 1 auto;
+    gap: var(--space-1);
+    overflow-x: auto;
+    scroll-snap-type: x mandatory;
+    padding-bottom: var(--space-1);
+  }
+
+  /* :global() — date chips, hour chips and the empty state are injected
+     via innerHTML by the script above, so Astro's scoping never applies.
+     Chips flex down to the card width (min-width: 0) so 5 chips + ‹ › never
+     push the card past the viewport; 46px stays the cap on roomy screens. */
+  :global(.date-chip) {
+    flex: 1 1 0;
+    min-width: 0;
+    max-width: 46px;
+    scroll-snap-align: start;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 2px;
+    padding: var(--space-2) 2px;
+    font-family: inherit;
+    font-size: 0.8rem;
+    color: var(--color-text);
+    background: var(--color-field);
+    border: 1px solid var(--color-field-border);
+    border-radius: var(--radius-lg);
+    cursor: pointer;
+    transition:
+      background 0.18s ease,
+      border-color 0.18s ease;
+  }
+
+  :global(.date-chip-name) {
+    font-size: 0.6rem;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+    color: var(--color-text-muted);
+  }
+
+  :global(.date-chip.is-selected) {
+    background: color-mix(in srgb, var(--color-accent) 12%, transparent);
+    border-color: var(--color-accent);
+  }
+
+  :global(.time-grid) {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: var(--space-2);
+  }
+
+  :global(.time-chip) {
+    padding: 0.6rem var(--space-2);
+    font-family: inherit;
+    font-size: 0.9rem;
+    font-weight: 700;
+    color: var(--color-text);
+    background: var(--color-field);
+    border: 1px solid var(--color-field-border);
+    border-radius: var(--radius-lg);
+    cursor: pointer;
+    transition:
+      background 0.18s ease,
+      border-color 0.18s ease;
+  }
+
+  :global(.time-chip.is-selected) {
+    background: color-mix(in srgb, var(--color-accent) 12%, transparent);
+    border-color: var(--color-accent);
+  }
+
+  :global(.date-chip:focus-visible),
+  :global(.time-chip:focus-visible) {
+    outline: 2px solid var(--color-focus-ring);
+    outline-offset: 2px;
+  }
+
+  :global(.empty) {
+    margin: var(--space-3) 0 0;
+    padding: var(--space-4);
+    font-size: 0.9rem;
+    text-align: center;
+    color: var(--color-text-muted);
+    background: var(--color-bg);
+    border: 1px dashed var(--color-border);
+    border-radius: var(--radius-lg);
+  }
+
+  .bottom-bar {
+    position: sticky;
+    bottom: 0;
+    z-index: 4;
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-2);
+    margin-top: var(--space-4);
+    padding: var(--space-3) 0 var(--space-2);
+    background: var(--color-bg);
+    border-top: 1px solid var(--color-border);
+  }
+
+  .summary {
+    font-size: 0.82rem;
+    letter-spacing: 0.04em;
+    color: var(--color-text-muted);
+    text-align: center;
+  }
+
+  .submit {
+    display: block;
+    box-sizing: border-box;
+    width: 100%;
+    padding: 0.9rem var(--space-4);
+    font-family: inherit;
+    font-size: 1rem;
+    font-weight: 700;
+    letter-spacing: 0.04em;
+    color: var(--button-primary-fg);
+    background: var(--button-primary-bg);
+    border: 1px solid var(--button-primary-bg);
+    border-radius: var(--radius-lg);
+    cursor: pointer;
+    transition:
+      background 0.18s ease,
+      border-color 0.18s ease,
+      transform 0.18s ease,
+      box-shadow 0.18s ease;
+  }
+
+  .submit:hover {
+    background: var(--button-primary-hover-bg);
+    border-color: var(--button-primary-hover-bg);
+    transform: translateY(-1px);
+    box-shadow: 0 12px 24px var(--color-accent-shadow);
+  }
+
+  .submit:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+    transform: none;
+    box-shadow: none;
+  }
+
+  .success {
+    box-sizing: border-box;
+    padding: var(--space-4);
+    background: var(--color-surface);
+    border: 1px solid var(--color-accent-line);
+    border-radius: var(--radius-lg);
+  }
+
+  .success-mark {
+    margin: 0 0 var(--space-4);
+    font-family: var(--font-display, serif);
+    font-size: clamp(1.6rem, 7vw, 2rem);
+    color: var(--color-accent);
+  }
+
+  .details {
+    margin-top: var(--space-4);
+    padding-top: var(--space-4);
+    border-top: 1px solid var(--color-border);
+  }
+
+  .saved {
+    margin: var(--space-3) 0 0;
+    padding: var(--space-2) var(--space-3);
+    font-size: 0.9rem;
+    font-weight: 700;
+    text-align: center;
+    color: var(--color-accent);
+    background: var(--color-accent-glow);
+    border: 1px solid var(--color-accent-line);
+    border-radius: var(--radius-lg);
+  }
+
+  .copy-hint {
+    margin: 0 0 var(--space-3);
+    font-size: 0.85rem;
+    color: var(--color-accent);
+  }
+
+  .actions {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-2);
+    margin-top: var(--space-3);
+  }
+
+  .secondary {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-sizing: border-box;
+    width: 100%;
+    padding: 0.85rem var(--space-4);
+    font-family: inherit;
+    font-size: 1rem;
+    font-weight: 700;
+    color: var(--color-accent);
+    background: transparent;
+    border: 1px solid var(--color-accent-line);
+    border-radius: var(--radius-lg);
+    cursor: pointer;
+    text-decoration: none;
+  }
+
+  .secondary:hover {
+    border-color: var(--color-accent);
+  }
+
+  /* "Cambiar" rides inside the chip/head row, so it drops the standalone
+     margin the stacked buttons keep. */
+  .client-chip .linklike,
+  .client-head .linklike {
+    margin: 0;
+    flex: 0 0 auto;
+  }
+
+  .linklike {
+    display: block;
+    margin: var(--space-4) auto 0;
+    padding: 0;
+    font-family: inherit;
+    font-size: 0.95rem;
+    color: var(--color-accent);
+    background: none;
+    border: none;
+    border-bottom: 1px solid var(--color-accent-line);
+    cursor: pointer;
+  }
+
+  .linklike:hover {
+    color: var(--color-accent-hover);
+    border-color: var(--color-accent-hover);
+  }
+
+  .submit:focus-visible,
+  .secondary:focus-visible,
+  .linklike:focus-visible {
+    outline: 2px solid var(--button-primary-focus-outline);
+    outline-offset: 3px;
+  }
+
+  @media (min-width: 720px) {
+    .page {
+      padding: var(--space-6) var(--space-4);
+    }
+
+    .shell {
+      max-width: 720px;
+    }
+
+    .actions {
+      flex-direction: row;
+    }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .field input,
+    .submit,
+    .date-page,
+    :global(.date-chip),
+    :global(.time-chip) {
+      transition: none;
+    }
+
+    .submit:hover {
+      transform: none;
+    }
+  }
+</style>

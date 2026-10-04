@@ -1,0 +1,245 @@
+---
+import BaseHead from '../components/BaseHead.astro';
+---
+
+<BaseHead
+  title="Completar registro | Webby's BarberShop"
+  description="Completá tus datos para tu cuenta en Webby's BarberShop"
+/>
+
+<div class="page">
+  <main class="card">
+    <header class="head">
+      <h1>Completar registro</h1>
+      <p class="tagline">Tus datos para agendar y recibir confirmaciones</p>
+    </header>
+
+    <form id="registro-form">
+      <div class="field">
+        <label for="reg-nombre">Nombre y apellido</label>
+        <input type="text" id="reg-nombre" name="nombre" autocomplete="name" />
+      </div>
+
+      <div class="field">
+        <label for="reg-tel">Teléfono</label>
+        <input type="tel" id="reg-tel" name="tel" autocomplete="tel" />
+      </div>
+
+      <div class="field">
+        <label for="reg-email">Correo electrónico</label>
+        <input
+          type="email"
+          id="reg-email"
+          name="email"
+          required
+          autocomplete="email"
+          placeholder="ejemplo@barbershop.com"
+        />
+      </div>
+
+      <div class="field">
+        <label for="reg-password">Contraseña</label>
+        <input
+          type="password"
+          id="reg-password"
+          name="password"
+          required
+          autocomplete="new-password"
+          placeholder="Tu contraseña"
+        />
+      </div>
+
+      <button type="submit" class="submit">Completar registro</button>
+    </form>
+
+    <p class="done" id="registro-ok" hidden role="status">✓ Registro completado</p>
+  </main>
+</div>
+
+<script>
+  import { appendRegistered } from '../scripts/clients.js';
+
+  // Query params come from the wizard's share link: nombre/tel ride along
+  // pre-filled and read-only, the client only owes email + contraseña.
+  const params = new URLSearchParams(location.search);
+  const nombre = (params.get('nombre') || '').trim();
+  const tel = (params.get('tel') || '').trim();
+
+  const nombreInput = document.getElementById('reg-nombre') as HTMLInputElement;
+  const telInput = document.getElementById('reg-tel') as HTMLInputElement;
+  const emailInput = document.getElementById('reg-email') as HTMLInputElement;
+  const form = document.getElementById('registro-form') as HTMLFormElement;
+  const done = document.getElementById('registro-ok') as HTMLElement;
+
+  if (nombre !== '') {
+    nombreInput.value = nombre;
+    nombreInput.readOnly = true;
+  }
+  if (tel !== '') {
+    telInput.value = tel;
+    telInput.readOnly = true;
+  }
+
+  form.addEventListener('submit', (event) => {
+    event.preventDefault();
+    // ponytail: demo record in localStorage — swap for Supabase auth later.
+    appendRegistered({
+      nombre: nombreInput.value.trim(),
+      tel: telInput.value.trim(),
+      email: emailInput.value.trim(),
+    });
+    form.hidden = true;
+    done.hidden = false;
+  });
+</script>
+
+<style>
+  .page {
+    box-sizing: border-box;
+    min-height: 100vh;
+    min-height: 100dvh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: var(--space-4);
+    font-family: var(--font-atkinson, sans-serif);
+    color: var(--color-text-muted);
+    background: var(--color-bg);
+  }
+
+  .card {
+    box-sizing: border-box;
+    width: 100%;
+    max-width: 420px;
+    padding: var(--space-5) var(--space-4);
+    background: var(--color-surface);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-lg);
+    box-shadow: 0 12px 28px color-mix(in srgb, var(--color-text) 14%, transparent);
+  }
+
+  .head {
+    text-align: center;
+    margin-bottom: var(--space-4);
+  }
+
+  h1 {
+    margin: 0 0 0.35rem;
+    font-family: var(--font-display, serif);
+    font-weight: 700;
+    font-size: clamp(1.7rem, 7vw, 2.1rem);
+    line-height: 1;
+    color: var(--color-heading);
+  }
+
+  .tagline {
+    margin: 0;
+    font-size: 0.92rem;
+    letter-spacing: 0.04em;
+    color: var(--color-text-muted);
+  }
+
+  .field {
+    margin-bottom: var(--space-3);
+  }
+
+  .field label {
+    display: block;
+    margin-bottom: 0.45rem;
+    font-size: 0.8rem;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--color-text-muted);
+  }
+
+  .field input {
+    box-sizing: border-box;
+    width: 100%;
+    padding: 0.8rem 0.9rem;
+    font-family: inherit;
+    font-size: 1rem;
+    color: var(--color-field-text);
+    background: var(--color-field);
+    border: 1px solid var(--color-field-border);
+    border-radius: var(--radius-lg);
+    transition:
+      border-color 0.18s ease,
+      box-shadow 0.18s ease;
+  }
+
+  .field input::placeholder {
+    color: var(--color-field-placeholder);
+  }
+
+  .field input:hover {
+    border-color: var(--color-field-border-hover);
+  }
+
+  .field input:focus-visible {
+    outline: none;
+    border-color: var(--color-accent);
+    box-shadow: 0 0 0 3px var(--color-accent-ring);
+  }
+
+  .field input[readonly] {
+    color: var(--color-text-muted);
+    background: color-mix(in srgb, var(--color-field) 60%, var(--color-bg));
+  }
+
+  .submit {
+    display: block;
+    box-sizing: border-box;
+    width: 100%;
+    margin-top: var(--space-2);
+    padding: 0.9rem var(--space-4);
+    font-family: inherit;
+    font-size: 1rem;
+    font-weight: 700;
+    letter-spacing: 0.04em;
+    color: var(--button-primary-fg);
+    background: var(--button-primary-bg);
+    border: 1px solid var(--button-primary-bg);
+    border-radius: var(--radius-lg);
+    cursor: pointer;
+    transition:
+      background 0.18s ease,
+      border-color 0.18s ease,
+      transform 0.18s ease,
+      box-shadow 0.18s ease;
+  }
+
+  .submit:hover {
+    background: var(--button-primary-hover-bg);
+    border-color: var(--button-primary-hover-bg);
+    transform: translateY(-1px);
+    box-shadow: 0 12px 24px var(--color-accent-shadow);
+  }
+
+  .submit:focus-visible {
+    outline: 2px solid var(--button-primary-focus-outline);
+    outline-offset: 3px;
+  }
+
+  .done {
+    margin: var(--space-4) 0 0;
+    padding: var(--space-3);
+    font-family: var(--font-display, serif);
+    font-size: 1.25rem;
+    text-align: center;
+    color: var(--color-accent);
+    background: var(--color-accent-glow);
+    border: 1px solid var(--color-accent-line);
+    border-radius: var(--radius-lg);
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .field input,
+    .submit {
+      transition: none;
+    }
+
+    .submit:hover {
+      transform: none;
+    }
+  }
+</style>
