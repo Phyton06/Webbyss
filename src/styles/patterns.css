@@ -439,7 +439,13 @@
   outline-offset: -2px;
 }
 
+/* Column so a BANEADO badge and the client's latest note can stack under the
+   name without disturbing the two-child (name · phone) layout. */
 .search-item-name {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 2px;
   font-weight: 700;
   overflow-wrap: anywhere;
 }
@@ -449,6 +455,39 @@
   font-size: 0.85rem;
   color: var(--color-text-muted);
   white-space: nowrap;
+}
+
+/* Banned clients stay visible in the search results — greyed out and never
+   selectable. Muted tokens instead of opacity, so contrast stays legible. */
+.search-item[data-banned] {
+  color: var(--color-text-muted);
+  cursor: not-allowed;
+}
+
+.search-item[data-banned]:hover {
+  background: transparent;
+}
+
+.search-item[data-banned]:focus-visible {
+  outline: none;
+}
+
+.ban-badge {
+  padding: 0.1rem 0.45rem;
+  font-size: 0.62rem;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  color: var(--color-text-muted);
+  background: var(--color-field);
+  border: 1px dashed var(--color-field-border-hover);
+  border-radius: var(--radius-lg);
+}
+
+.search-item-note {
+  font-size: 0.78rem;
+  font-weight: 400;
+  font-style: italic;
+  color: var(--color-text-muted);
 }
 
 .search-add {

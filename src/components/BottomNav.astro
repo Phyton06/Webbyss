@@ -5,20 +5,25 @@ const base = import.meta.env.BASE_URL;
 // Normalize the URL: drop a trailing slash / index.html so the suffix
 // checks below work whether Astro serves the folder or the file.
 const path = Astro.url.pathname.replace(/\/+$/, '').replace(/\/index\.html$/, '');
+// Section keys match by substring: the cliente/empleado families each span a
+// list, a detail page and a form, so a single token covers the three.
+const inAdmin = path.includes('/admin/');
 const current = path.endsWith('/admin/agenda')
   ? 'agenda'
-  : path.includes('/admin/empleado')
-    ? 'personal'
-    : path.endsWith('/admin')
-      ? 'inicio'
-      : '';
+  : inAdmin && path.includes('cliente')
+    ? 'clientes'
+    : inAdmin && path.includes('empleado')
+      ? 'personal'
+      : path.endsWith('/admin')
+        ? 'inicio'
+        : '';
 
 const tabs = [
   { key: 'inicio', label: 'Inicio', href: `${base}/admin/` },
   { key: 'agenda', label: 'Agenda', href: `${base}/admin/agenda` },
   { key: 'personal', label: 'Personal', href: `${base}/admin/empleados` },
-  // ponytail: no settings screen yet, points at home
-  { key: 'ajustes', label: 'Ajustes', href: `${base}/admin/` },
+  // Replaces the old "Ajustes" placeholder, which pointed at home.
+  { key: 'clientes', label: 'Clientes', href: `${base}/admin/clientes` },
 ];
 
 // 24×24 outline icons, currentColor — no icon font, no dependency.
@@ -29,8 +34,8 @@ const icons = {
     '<rect x="3" y="5" width="18" height="16" rx="2"/><path d="M3 10h18M8 3v4M16 3v4"/>',
   personal:
     '<circle cx="12" cy="8" r="4"/><path d="M4 21c1.5-4 4.5-6 8-6s6.5 2 8 6"/>',
-  ajustes:
-    '<circle cx="12" cy="12" r="3.2"/><path d="M12 2.5v3M12 18.5v3M2.5 12h3M18.5 12h3M5.2 5.2l2.1 2.1M16.7 16.7l2.1 2.1M18.8 5.2 16.7 7.3M7.3 16.7l-2.1 2.1"/>',
+  clientes:
+    '<circle cx="9" cy="8" r="3.4"/><path d="M3 20c0-3.3 2.7-6 6-6s6 2.7 6 6"/><path d="M16 5.2a3.4 3.4 0 0 1 0 5.6"/><path d="M18.2 14.6A6.6 6.6 0 0 1 21 19.4"/>',
 };
 ---
 

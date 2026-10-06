@@ -151,6 +151,20 @@ const base = import.meta.env.BASE_URL;
         escapeHtml,
         statusClass,
       } from '../../scripts/appointments.js';
+      import { readClients } from '../../scripts/clients.js';
+
+      // Banned clients surface a warning on every appointment they own.
+      // A record carrying a phone is matched on it, one without falls back to
+      // the name — the same rule `banClient` uses when it cancels bookings.
+      const bannedPhones = new Set();
+      const bannedNames = new Set();
+      for (const client of readClients()) {
+        if (!client.banned) continue;
+        if (client.phone) bannedPhones.add(client.phone);
+        bannedNames.add(client.name);
+      }
+      const isBanned = (appointment) =>
+        appointment.phone ? bannedPhones.has(appointment.phone) : bannedNames.has(appointment.client);
 
       const MONTHS = [
         'Enero',
@@ -381,7 +395,13 @@ const base = import.meta.env.BASE_URL;
       function blockHtml(appointment) {
         return `<div class="day-block" style="border-left-color: ${barberColor(appointment.barber)}">
             <span class="day-block-time">${escapeHtml(appointment.time)}</span>
-            <strong>${escapeHtml(appointment.client)}</strong>
+            <strong
+              >${escapeHtml(appointment.client)}${
+                isBanned(appointment)
+                  ? '<span class="ban-flag" title="Cliente baneado">⚠ BANEADO</span>'
+                  : ''
+              }</strong
+            >
             <span class="day-block-meta">${appointment.service ? `${escapeHtml(appointment.service)} · ` : ''}${escapeHtml(appointment.barber)}</span>
             ${appointment.status ? statusPill(appointment) : ''}
           </div>`;
@@ -713,6 +733,22 @@ const base = import.meta.env.BASE_URL;
     color: var(--color-text-muted);
     background: transparent;
     border: 1px dashed var(--color-border);
+  }
+
+  /* Inline warning next to the client name in a day block. */
+  :global(.ban-flag) {
+    display: inline-block;
+    margin-left: 0.35rem;
+    padding: 0.1rem 0.4rem;
+    font-size: 0.6rem;
+    font-weight: 700;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    vertical-align: middle;
+    color: var(--color-text-muted);
+    background: var(--color-bg);
+    border: 1px dashed var(--color-field-border-hover);
+    border-radius: var(--radius-lg);
   }
 
   :global(.pill.is-cancelled) {
