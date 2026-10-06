@@ -1,0 +1,390 @@
+---
+import BaseHead from '../../components/BaseHead.astro';
+import BottomNav from '../../components/BottomNav.astro';
+
+const base = import.meta.env.BASE_URL;
+---
+
+<!doctype html>
+<html lang="es">
+  <head>
+    <BaseHead
+      title="Personal — Admin | Webby's BarberShop"
+      description="Listado de personal de Webby's BarberShop"
+    />
+  </head>
+  <body>
+    <div class="page">
+      <div class="shell">
+        <header class="topbar">
+          <span class="brand">
+            <img
+              src={`${base}/assets/logo.jpeg`}
+              alt="Webby's BarberShop"
+              class="brand-logo"
+              width="44"
+              height="44"
+            />
+            <span class="brand-name">Webby's</span>
+          </span>
+          <span class="chip">Admin</span>
+          <a class="search-btn" href="#buscar" aria-label="Buscar empleado">
+            <svg viewBox="0 0 24 24" aria-hidden="true" width="20" height="20">
+              <circle cx="11" cy="11" r="7" fill="none" stroke="currentColor" stroke-width="1.8"
+              ></circle>
+              <path
+                d="m16.5 16.5 4 4"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="1.8"
+                stroke-linecap="round"></path>
+            </svg>
+          </a>
+        </header>
+
+        <h1 class="page-title">Personal</h1>
+
+        <div class="search-wrap">
+          <div class="search">
+            <label class="search-label" for="buscar">Buscar personal</label>
+            <input
+              class="search-input"
+              id="buscar"
+              type="search"
+              placeholder="Nombre o teléfono"
+              autocomplete="off"
+            />
+          </div>
+        </div>
+
+        <div id="groups"></div>
+      </div>
+    </div>
+
+    <a class="fab" href={`${base}/admin/nuevo-empleado`} aria-label="Agregar empleado">+</a>
+
+    <BottomNav />
+
+    <script is:inline>
+      if (sessionStorage.getItem('webbys_admin') !== '1') {
+        location.replace('/Webbyss/login');
+      }
+    </script>
+
+    <script>
+      import {
+        seedEmployees,
+        ROLE_LABEL,
+        ROLE_NAME,
+        ROLE_TOKEN,
+        ROLES,
+        escapeHtml,
+      } from '../../scripts/employees.js';
+
+      const groupsEl = document.getElementById('groups');
+      const searchEl = document.getElementById('buscar');
+
+      const initials = (name) =>
+        String(name)
+          .trim()
+          .split(/\s+/)
+          .slice(0, 2)
+          .map((part) => part.charAt(0))
+          .join('')
+          .toUpperCase();
+
+      const rowHtml = (employee) => {
+        const token = ROLE_TOKEN[employee.role] || ROLE_TOKEN.barbero;
+        const status =
+          employee.status === 'Baja' ? '<span class="status-chip">Baja</span>' : '';
+        return `
+          <li>
+            <a class="row" href="/Webbyss/admin/empleado?id=${encodeURIComponent(employee.id)}">
+              <span class="avatar" style="background:${token}" aria-hidden="true">${escapeHtml(
+                initials(employee.name),
+              )}</span>
+              <span class="row-body">
+                <span class="row-name">${escapeHtml(employee.name)}</span>
+                <span class="row-phone">${escapeHtml(employee.phone)}</span>
+              </span>
+              <span class="role-chip">${escapeHtml(ROLE_NAME[employee.role] || employee.role)}</span>
+              ${status}
+              <span class="chevron" aria-hidden="true">›</span>
+            </a>
+          </li>`;
+      };
+
+      const render = () => {
+        const needle = searchEl.value.trim().toLowerCase();
+        const matches = seedEmployees().filter(
+          (employee) =>
+            needle === '' ||
+            String(employee.name).toLowerCase().includes(needle) ||
+            String(employee.phone).toLowerCase().includes(needle),
+        );
+
+        // Groups with no match render nothing (hidden, not empty-headed).
+        groupsEl.innerHTML = ROLES.map((role) => {
+          const rows = matches.filter((employee) => employee.role === role);
+          if (rows.length === 0) return '';
+          return `
+            <ul class="group">
+              <li>
+                <h2 class="group-title">${ROLE_LABEL[role]}</h2>
+                <ul class="rows">${rows.map(rowHtml).join('')}</ul>
+              </li>
+            </ul>`;
+        }).join('');
+      };
+
+      searchEl.addEventListener('input', render);
+      render();
+    </script>
+  </body>
+</html>
+
+<style>
+  .page {
+    box-sizing: border-box;
+    min-height: 100vh;
+    min-height: 100dvh;
+    padding: var(--space-4);
+    font-family: var(--font-atkinson, sans-serif);
+    color: var(--color-text);
+    background: var(--color-bg);
+  }
+
+  .shell {
+    width: 100%;
+    max-width: 640px;
+    margin: 0 auto;
+    padding-bottom: var(--space-6);
+  }
+
+  .topbar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: var(--space-3);
+    margin-bottom: var(--space-4);
+  }
+
+  .brand {
+    display: flex;
+    align-items: center;
+    gap: var(--space-2);
+  }
+
+  .brand-logo {
+    display: block;
+    width: 44px;
+    height: 44px;
+    object-fit: cover;
+    border-radius: 50%;
+    border: 1px solid var(--color-accent-soft);
+    box-shadow: var(--shadow-logo);
+  }
+
+  .brand-name {
+    font-family: var(--font-display, serif);
+    font-weight: 700;
+    font-size: 1.25rem;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    color: var(--color-heading);
+  }
+
+  .chip {
+    padding: 0.25rem 0.7rem;
+    font-size: 0.75rem;
+    font-weight: 700;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: var(--color-accent);
+    background: var(--color-accent-glow);
+    border: 1px solid var(--color-accent-line);
+    border-radius: var(--radius-lg);
+  }
+
+  .search-btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 44px;
+    height: 44px;
+    color: var(--color-text-muted);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-lg);
+    background: var(--color-surface);
+  }
+
+  .search-btn:focus-visible {
+    outline: 2px solid var(--color-focus-ring);
+    outline-offset: 2px;
+  }
+
+  .page-title {
+    margin: 0 0 var(--space-4);
+    font-family: var(--font-display, serif);
+    font-weight: 700;
+    font-size: clamp(1.8rem, 8vw, 2.4rem);
+    line-height: 1;
+    color: var(--color-heading);
+  }
+
+  .search-wrap {
+    margin-bottom: var(--space-4);
+  }
+
+  .search-label {
+    font-size: 0.8rem;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--color-text-muted);
+  }
+
+  /* Floating action button — above the sticky bottom nav (56px + gap). */
+  .fab {
+    position: fixed;
+    right: var(--space-4);
+    bottom: 88px;
+    z-index: 30;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 56px;
+    height: 56px;
+    font-size: 1.9rem;
+    line-height: 1;
+    text-decoration: none;
+    color: var(--button-primary-fg);
+    background: var(--button-primary-bg);
+    border: 1px solid var(--button-primary-bg);
+    border-radius: 50%;
+    box-shadow: 0 10px 22px var(--color-accent-shadow);
+  }
+
+  .fab:focus-visible {
+    outline: 2px solid var(--button-primary-focus-outline);
+    outline-offset: 3px;
+  }
+
+  /* The rows below are injected via innerHTML, so Astro's style scoping
+     never reaches them: every rule that styles injected markup is :global. */
+  :global(.group) {
+    margin: 0 0 var(--space-4);
+    padding: 0;
+    list-style: none;
+  }
+
+  :global(.group-title) {
+    margin: 0 0 var(--space-2);
+    font-family: var(--font-display, serif);
+    font-size: 1.05rem;
+    font-weight: 700;
+    color: var(--color-heading);
+  }
+
+  :global(.rows) {
+    margin: 0;
+    padding: 0;
+    list-style: none;
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-2);
+  }
+
+  :global(.row) {
+    display: flex;
+    align-items: center;
+    gap: var(--space-3);
+    box-sizing: border-box;
+    min-height: 56px; /* ≥44×44 target */
+    padding: var(--space-2) var(--space-3);
+    text-decoration: none;
+    color: var(--color-text);
+    background: var(--color-surface);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-lg);
+  }
+
+  :global(.row:hover) {
+    border-color: var(--color-accent);
+  }
+
+  :global(.row:focus-visible) {
+    outline: 2px solid var(--color-focus-ring);
+    outline-offset: 2px;
+  }
+
+  :global(.avatar) {
+    flex: 0 0 auto;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 40px;
+    height: 40px;
+    font-size: 0.85rem;
+    font-weight: 700;
+    letter-spacing: 0.04em;
+    color: var(--color-white); /* clears 4.5:1 on every role token */
+    border-radius: 50%;
+  }
+
+  :global(.row-body) {
+    flex: 1 1 auto;
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
+  }
+
+  :global(.row-name) {
+    font-size: 1rem;
+    font-weight: 700;
+    color: var(--color-text);
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  :global(.row-phone) {
+    font-size: 0.85rem;
+    color: var(--color-text-muted);
+  }
+
+  :global(.role-chip),
+  :global(.status-chip) {
+    flex: 0 0 auto;
+    padding: 0.15rem 0.55rem;
+    font-size: 0.68rem;
+    font-weight: 700;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    white-space: nowrap;
+    border-radius: var(--radius-lg);
+    color: var(--color-text-muted);
+    background: var(--color-bg);
+    border: 1px solid var(--color-border);
+  }
+
+  :global(.status-chip) {
+    border-style: dashed;
+  }
+
+  :global(.chevron) {
+    flex: 0 0 auto;
+    font-size: 1.3rem;
+    line-height: 1;
+    color: var(--color-text-muted);
+  }
+
+  @media (min-width: 720px) {
+    .page {
+      padding: var(--space-6) var(--space-4);
+    }
+
+    .shell {
+      max-width: 720px;
+    }
+  }
+</style>

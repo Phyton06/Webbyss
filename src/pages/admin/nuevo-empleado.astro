@@ -1,0 +1,1022 @@
+---
+import BaseHead from '../../components/BaseHead.astro';
+import { ROLES, ROLE_LABEL } from '../../scripts/employees.js';
+
+// ponytail: single form page for alta + edición; split only when the two
+// flows diverge. Chosen by `?id` (Astro is static, no per-id routes).
+const base = import.meta.env.BASE_URL;
+---
+
+<!doctype html>
+<html lang="es">
+  <head>
+    <BaseHead
+      title="Empleado — Admin | Webby's BarberShop"
+      description="Alta y edición de personal de Webby's BarberShop"
+    />
+  </head>
+  <body>
+    <div class="page">
+      <div class="shell">
+        <a class="back" href="/Webbyss/admin/empleados">← Personal</a>
+
+        <section id="form-view">
+          <h1 class="page-title" id="form-title">Nuevo empleado</h1>
+
+          <form id="employee-form" novalidate>
+            <div class="field">
+              <label for="f-name">Nombre</label>
+              <input id="f-name" name="name" type="text" autocomplete="name" />
+              <p class="field-error" id="error-name" hidden>Ingresá el nombre.</p>
+            </div>
+
+            <div class="field">
+              <label for="f-phone">Teléfono</label>
+              <input id="f-phone" name="phone" type="tel" autocomplete="tel" />
+              <p class="field-error" id="error-phone" hidden>Ingresá el teléfono.</p>
+            </div>
+
+            <div class="field" id="field-email">
+              <label for="f-email">Correo</label>
+              <input id="f-email" name="email" type="email" autocomplete="email" />
+            </div>
+
+            <div class="field" id="field-role">
+              <!-- M3 exposed dropdown — patterns.css (.filter*), same as agenda/nueva-cita -->
+              <div class="filter" id="role-filter">
+                <button
+                  type="button"
+                  class="filter-trigger"
+                  id="role-trigger"
+                  aria-expanded="false"
+                  aria-controls="role-panel"
+                >
+                  <span class="filter-name">Rol</span>
+                  <span class="filter-value" id="role-value">{ROLE_LABEL[ROLES[1]]}</span>
+                  <span class="filter-caret" aria-hidden="true">▾</span>
+                </button>
+                <div class="filter-panel" id="role-panel" role="group" aria-label="Rol" hidden>
+                  {
+                    ROLES.map((role) => (
+                      <label class="filter-check">
+                        <input
+                          type="radio"
+                          name="role"
+                          value={role}
+                          checked={role === 'barbero'}
+                        />
+                        {ROLE_LABEL[role]}
+                      </label>
+                    ))
+                  }
+                </div>
+              </div>
+            </div>
+
+            <div class="field" id="field-start">
+              <label id="start-label">Fecha de ingreso</label>
+              <!-- Month calendar — patterns.css (.cal*), same as admin/agenda -->
+              <section class="calendar" aria-labelledby="start-label">
+                <div class="cal-head">
+                  <button type="button" class="cal-nav" id="start-prev" aria-label="Mes anterior"
+                    >‹</button
+                  >
+                  <h2 class="cal-title" id="start-title"></h2>
+                  <button type="button" class="cal-nav" id="start-next" aria-label="Mes siguiente"
+                    >›</button
+                  >
+                </div>
+                <div class="cal-weekdays" aria-hidden="true">
+                  <span>L</span><span>M</span><span>X</span><span>J</span><span>V</span><span>S</span
+                  ><span>D</span>
+                </div>
+                <div class="cal-grid" id="start-grid"></div>
+              </section>
+              <input type="hidden" id="f-start" name="startDate" />
+            </div>
+
+            <div class="field" id="field-schedule">
+              <label id="schedule-label">Horario</label>
+              <div id="schedule-blocks"></div>
+              <button class="add-sched" id="add-schedule" type="button">
+                <span aria-hidden="true">+</span> Agregar otro horario
+              </button>
+              <input type="hidden" id="f-schedule" name="schedule" />
+            </div>
+
+            <button class="cta" type="submit">Guardar empleado</button>
+          </form>
+        </section>
+
+        <section id="result-view" hidden>
+          <h1 class="page-title">Empleado creado</h1>
+          <p class="result-lead">
+            Mandale este link a <strong id="result-name"></strong> para que complete su
+            horario y su correo.
+          </p>
+          <p class="result-warn">
+            Pasalo por WhatsApp: hasta que la persona lo abra y lo complete, su ficha
+            queda a medio cargar.
+          </p>
+          <div class="field">
+            <label for="share-url">Link de registro</label>
+            <input id="share-url" type="text" readonly />
+          </div>
+          <div class="result-actions">
+            <button class="cta" type="button" id="copy-url">Copiar link</button>
+            <a class="open-link" id="open-url" href="#">Abrir el link</a>
+          </div>
+          <p class="copy-status" id="copy-status" hidden role="status"></p>
+        </section>
+
+        <section id="fallback-view" hidden>
+          <h1 class="page-title">No encontramos ese empleado</h1>
+          <p class="fallback-text">Revisá el enlace o volvé a la lista del personal.</p>
+          <a class="back" href="/Webbyss/admin/empleados">Volver a personal</a>
+        </section>
+      </div>
+    </div>
+
+    <script is:inline>
+      if (sessionStorage.getItem('webbys_admin') !== '1') {
+        location.replace('/Webbyss/login');
+      }
+    </script>
+
+    <script>
+      import {
+        seedEmployees,
+        getEmployee,
+        appendEmployee,
+        updateEmployee,
+        ROLE_NAME,
+        ROLE_LABEL,
+      } from '../../scripts/employees.js';
+      import {
+        dayKey,
+        todayKey,
+        escapeHtml,
+      } from '../../scripts/appointments.js';
+
+      const form = document.getElementById('employee-form');
+      const formView = document.getElementById('form-view');
+      const fallbackView = document.getElementById('fallback-view');
+      const resultView = document.getElementById('result-view');
+      const titleEl = document.getElementById('form-title');
+
+      const nameEl = document.getElementById('f-name');
+      const phoneEl = document.getElementById('f-phone');
+      const emailEl = document.getElementById('f-email');
+      const startEl = document.getElementById('f-start');
+      const scheduleEl = document.getElementById('f-schedule');
+
+      const resultName = document.getElementById('result-name');
+      const shareUrl = document.getElementById('share-url');
+      const openUrl = document.getElementById('open-url');
+      const copyBtn = document.getElementById('copy-url');
+      const copyStatus = document.getElementById('copy-status');
+
+      const id = new URLSearchParams(window.location.search).get('id');
+
+      // Deep links can land here on a fresh browser: seed before the lookup.
+      seedEmployees();
+      const employee = id ? getEmployee(id) : null;
+
+      const setError = (input, errorId, message, show) => {
+        const box = document.getElementById(errorId);
+        box.hidden = !show;
+        box.textContent = message;
+        input.setAttribute('aria-invalid', show ? 'true' : 'false');
+      };
+
+      // ─── Rol: M3 exposed dropdown (same behaviour as admin/agenda) ──
+      const roleTrigger = document.getElementById('role-trigger');
+      const rolePanel = document.getElementById('role-panel');
+      const roleValue = document.getElementById('role-value');
+
+      const closeRolePanel = () => {
+        rolePanel.hidden = true;
+        roleTrigger.setAttribute('aria-expanded', 'false');
+      };
+
+      roleTrigger.addEventListener('click', () => {
+        const open = roleTrigger.getAttribute('aria-expanded') === 'true';
+        roleTrigger.setAttribute('aria-expanded', String(!open));
+        rolePanel.hidden = open;
+      });
+
+      rolePanel.addEventListener('change', (event) => {
+        const input = event.target.closest('input[name="role"]');
+        if (!input) return;
+        roleValue.textContent = ROLE_LABEL[input.value] || input.value;
+        closeRolePanel();
+      });
+
+      document.addEventListener('click', (event) => {
+        if (!(event.target instanceof Element)) return;
+        if (
+          !rolePanel.hidden &&
+          !rolePanel.contains(event.target) &&
+          !roleTrigger.contains(event.target)
+        ) {
+          closeRolePanel();
+        }
+      });
+
+      document.addEventListener('keydown', (event) => {
+        if (event.key !== 'Escape' || rolePanel.hidden) return;
+        closeRolePanel();
+        roleTrigger.focus();
+      });
+
+      const selectRole = (role) => {
+        const input = [...rolePanel.querySelectorAll('input[name="role"]')].find(
+          (entry) => entry.value === role,
+        );
+        if (!input) return;
+        input.checked = true;
+        roleValue.textContent = ROLE_LABEL[role] || role;
+      };
+
+      const currentRole = () =>
+        rolePanel.querySelector('input[name="role"]:checked')?.value || 'barbero';
+
+      // ─── Fecha de ingreso: month calendar (same pattern as admin/agenda) ──
+      const MONTHS = [
+        'enero',
+        'febrero',
+        'marzo',
+        'abril',
+        'mayo',
+        'junio',
+        'julio',
+        'agosto',
+        'septiembre',
+        'octubre',
+        'noviembre',
+        'diciembre',
+      ];
+      const startGrid = document.getElementById('start-grid');
+      const startTitle = document.getElementById('start-title');
+      const today = new Date();
+      let calYear = today.getFullYear();
+      let calMonth = today.getMonth();
+      let startDate = '';
+
+      const renderStartCalendar = () => {
+        const first = new Date(calYear, calMonth, 1);
+        const offset = (first.getDay() + 6) % 7; // lunes primero
+        const daysInMonth = new Date(calYear, calMonth + 1, 0).getDate();
+        const prevDays = new Date(calYear, calMonth, 0).getDate();
+        const total = Math.ceil((offset + daysInMonth) / 7) * 7;
+        const nowKey = todayKey();
+
+        const cells = [];
+        for (let index = 0; index < total; index++) {
+          const n = index - offset + 1;
+          let date;
+          let outside = false;
+          if (n < 1) {
+            date = new Date(calYear, calMonth - 1, prevDays + n);
+            outside = true;
+          } else if (n > daysInMonth) {
+            date = new Date(calYear, calMonth + 1, n - daysInMonth);
+            outside = true;
+          } else {
+            date = new Date(calYear, calMonth, n);
+          }
+          const key = dayKey(date);
+          const label = `${date.getDate()} de ${MONTHS[date.getMonth()]} de ${date.getFullYear()}`;
+          cells.push(
+            `<button type="button" class="cal-cell${
+              outside ? ' is-outside' : ''
+            }${key === nowKey ? ' is-today' : ''}${
+              key === startDate ? ' is-selected' : ''
+            }" data-key="${key}" aria-label="${escapeHtml(label)}" aria-pressed="${
+              key === startDate
+            }"${key === nowKey ? ' aria-current="date"' : ''}>` +
+              `<span class="cal-day">${date.getDate()}</span></button>`,
+          );
+        }
+        startTitle.textContent = `${MONTHS[calMonth]} ${calYear}`;
+        startGrid.innerHTML = cells.join('');
+      };
+
+      const shiftMonth = (delta) => {
+        const target = new Date(calYear, calMonth + delta, 1);
+        calYear = target.getFullYear();
+        calMonth = target.getMonth();
+        renderStartCalendar();
+      };
+
+      document.getElementById('start-prev').addEventListener('click', () => shiftMonth(-1));
+      document.getElementById('start-next').addEventListener('click', () => shiftMonth(1));
+
+      startGrid.addEventListener('click', (event) => {
+        const cell = event.target.closest('.cal-cell');
+        if (!cell) return;
+        setStartDate(cell.dataset.key);
+      });
+
+      // Start date is usually in the past, so month nav is unrestricted.
+      function setStartDate(key) {
+        startDate = key || '';
+        if (startDate) {
+          const picked = new Date(`${startDate}T00:00:00`);
+          calYear = picked.getFullYear();
+          calMonth = picked.getMonth();
+        }
+        startEl.value = startDate;
+        renderStartCalendar();
+      }
+
+      // ─── Horario: selectable days + hours, composed to the legacy string ──
+      // ponytail: `schedule` stays a display string (empleado.astro, the seeds
+      // and the free-text registro flow all read it) — no schema change. Several
+      // shifts are just segments joined with '; '.
+      const DAYS = ['Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb', 'Dom'];
+      const HOURS = Array.from({ length: 13 }, (_, i) => i + 8); // 08..20
+      const blocksEl = document.getElementById('schedule-blocks');
+      const addSchedBtn = document.getElementById('add-schedule');
+      const hourText = (value) => (value == null ? '—' : `${value} h`);
+
+      const newBlock = () => ({ days: new Set(), from: null, to: null });
+      let blocks = [newBlock()];
+
+      const composeSegment = (block) => {
+        if (!block.days.size || block.from == null || block.to == null) return '';
+        const sorted = [...block.days].sort((a, b) => a - b);
+        const runs = [];
+        let start = sorted[0];
+        let prev = sorted[0];
+        for (let i = 1; i <= sorted.length; i++) {
+          const cur = sorted[i];
+          if (cur === prev + 1) {
+            prev = cur;
+            continue;
+          }
+          runs.push([start, prev]);
+          start = cur;
+          prev = cur;
+        }
+        const dayPart = runs
+          .map(([a, b]) =>
+            a === b
+              ? DAYS[a]
+              : b - a >= 2
+                ? `${DAYS[a]} a ${DAYS[b]}`
+                : `${DAYS[a]}, ${DAYS[b]}`,
+          )
+          .join(', ');
+        return `${dayPart} · ${block.from}–${block.to} h`;
+      };
+
+      const composeSchedule = () => blocks.map(composeSegment).filter(Boolean).join('; ');
+
+      const norm = (value) =>
+        value.trim().toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+
+      function parseSegment(text, block) {
+        const [dayPart = '', timePart = ''] = text.split('·');
+        const abbr = DAYS.map(norm);
+        const find = (token) => abbr.indexOf(norm(token));
+
+        const range = dayPart.trim().match(/^\s*(\S+)\s+a\s+(\S+)\s*$/i);
+        if (range) {
+          const from = find(range[1]);
+          const to = find(range[2]);
+          if (from >= 0 && to >= 0) {
+            let cursor = from;
+            for (let guard = 0; guard < 7; guard++) {
+              block.days.add(cursor);
+              if (cursor === to) break;
+              cursor = (cursor + 1) % 7;
+            }
+          }
+        } else {
+          for (const token of dayPart.split(',')) {
+            const index = find(token);
+            if (index >= 0) block.days.add(index);
+          }
+        }
+
+        const time = timePart
+          .replace(/h\s*$/i, '')
+          .match(/(\d{1,2})(?::\d{2})?\s*[–-]\s*(\d{1,2})(?::\d{2})?/);
+        if (time) {
+          block.from = Number(time[1]);
+          block.to = Number(time[2]);
+        }
+      }
+
+      function parseSchedule(text) {
+        const segments = String(text || '')
+          .split(';')
+          .map((segment) => segment.trim())
+          .filter(Boolean);
+        blocks = segments.length
+          ? segments.map((segment) => {
+              const block = newBlock();
+              parseSegment(segment, block);
+              return block;
+            })
+          : [newBlock()];
+      }
+
+      const LAST_HOUR = HOURS[HOURS.length - 1];
+
+      // Hasta has to close strictly after Desde, so 9–8 and 9–9 are both invalid:
+      // 'to' hides every hour at or before the opening one, and the last hour can
+      // never open a shift (it would leave nothing to close with).
+      const isBlocked = (key, hour, block) =>
+        key === 'to' ? hour <= block.from : hour >= LAST_HOUR;
+
+      const timePickerHTML = (blockIndex, key, label, selected) => `
+        <div class="filter sched-time">
+          <button
+            type="button"
+            class="filter-trigger"
+            data-hour-trigger="${blockIndex}:${key}"
+            aria-expanded="false"
+            aria-controls="hour-panel-${blockIndex}-${key}"
+          >
+            <span class="filter-name">${label}</span>
+            <span class="filter-value" data-hour-value="${blockIndex}:${key}">${hourText(selected)}</span>
+            <span class="filter-caret" aria-hidden="true">▾</span>
+          </button>
+          <div
+            class="filter-panel sched-hours"
+            id="hour-panel-${blockIndex}-${key}"
+            role="group"
+            aria-label="${label} — horario ${blockIndex + 1}"
+            hidden
+          >
+            ${HOURS.map((hour) => {
+              const off = isBlocked(key, hour, blocks[blockIndex]);
+              return `
+                <button
+                  type="button"
+                  class="time-chip${hour === selected ? ' is-selected' : ''}${off ? ' is-disabled' : ''}"
+                  data-hour="${blockIndex}:${key}:${hour}"
+                  aria-pressed="${hour === selected}"
+                  ${off ? 'disabled' : ''}
+                >${hour}</button>`;
+            }).join('')}
+          </div>
+        </div>`;
+
+      const blockHTML = (block, i) => `
+        <div class="sched-block" data-block="${i}">
+          <div class="sched-head">
+            <p class="pick-label">Horario ${i + 1}</p>
+            ${
+              blocks.length > 1
+                ? `<button type="button" class="sched-remove" data-remove="${i}" aria-label="Quitar horario ${i + 1}">✕</button>`
+                : ''
+            }
+          </div>
+          <div class="day-row" role="group" aria-label="Días del horario ${i + 1}">
+            ${DAYS.map(
+              (day, di) => `
+                <button
+                  type="button"
+                  class="day-chip${block.days.has(di) ? ' is-selected' : ''}"
+                  data-day="${i}:${di}"
+                  aria-pressed="${block.days.has(di)}"
+                >${day}</button>`,
+            ).join('')}
+          </div>
+          <div class="sched-times">
+            ${timePickerHTML(i, 'from', 'Desde', block.from)}
+            ${timePickerHTML(i, 'to', 'Hasta', block.to)}
+          </div>
+        </div>`;
+
+      function renderSchedule() {
+        // Stored strings predate this rule, so normalise on the way in.
+        blocks.forEach((block) => {
+          if (block.from >= LAST_HOUR) block.from = LAST_HOUR - 1;
+          if (block.to <= block.from) block.to = block.from + 1;
+        });
+        blocksEl.innerHTML = blocks.map(blockHTML).join('');
+        scheduleEl.value = composeSchedule();
+      }
+
+      const closeHourPanels = () => {
+        blocksEl.querySelectorAll('[data-hour-trigger]').forEach((trigger) => {
+          trigger.setAttribute('aria-expanded', 'false');
+          document.getElementById(trigger.getAttribute('aria-controls'))?.setAttribute('hidden', '');
+        });
+      };
+
+      blocksEl.addEventListener('click', (event) => {
+        const removeBtn = event.target.closest('[data-remove]');
+        if (removeBtn) {
+          blocks.splice(Number(removeBtn.dataset.remove), 1);
+          renderSchedule();
+          return;
+        }
+
+        const trigger = event.target.closest('[data-hour-trigger]');
+        if (trigger) {
+          const wasOpen = trigger.getAttribute('aria-expanded') === 'true';
+          closeHourPanels();
+          if (!wasOpen) {
+            trigger.setAttribute('aria-expanded', 'true');
+            document.getElementById(trigger.getAttribute('aria-controls'))?.removeAttribute('hidden');
+          }
+          return;
+        }
+
+        const chip = event.target.closest('.day-chip');
+        if (chip) {
+          const [blockIndex, dayIndex] = chip.dataset.day.split(':').map(Number);
+          const days = blocks[blockIndex].days;
+          if (days.has(dayIndex)) days.delete(dayIndex);
+          else days.add(dayIndex);
+          const on = days.has(dayIndex);
+          chip.classList.toggle('is-selected', on);
+          chip.setAttribute('aria-pressed', String(on));
+          scheduleEl.value = composeSchedule();
+          return;
+        }
+
+        const hour = event.target.closest('[data-hour]');
+        if (hour) {
+          const [blockIndex, key, value] = hour.dataset.hour.split(':');
+          blocks[Number(blockIndex)][key] = Number(value);
+          // One re-render keeps both pickers' blocked hours and the clamp in sync.
+          renderSchedule();
+          document.querySelector(`[data-hour-trigger="${blockIndex}:${key}"]`)?.focus();
+        }
+      });
+
+      addSchedBtn.addEventListener('click', () => {
+        blocks.push(newBlock());
+        renderSchedule();
+        blocksEl.lastElementChild?.querySelector('.day-chip')?.focus();
+      });
+
+      document.addEventListener('click', (event) => {
+        if (!event.target.closest('.sched-time')) closeHourPanels();
+      });
+      document.addEventListener('keydown', (event) => {
+        if (event.key === 'Escape') closeHourPanels();
+      });
+
+      if (id && !employee) {
+        // Unknown id → same fallback as the detail screen.
+        formView.hidden = true;
+        fallbackView.hidden = false;
+      } else {
+        if (employee) {
+          titleEl.textContent = 'Editar empleado';
+          nameEl.value = employee.name;
+          phoneEl.value = employee.phone;
+          emailEl.value = employee.email || '';
+          selectRole(employee.role || 'barbero');
+          setStartDate(employee.startDate || todayKey());
+          parseSchedule(employee.schedule || '');
+        } else {
+          // Alta is nombre + teléfono + rol only; edición keeps the full set.
+          selectRole('barbero');
+          setStartDate(todayKey());
+          parseSchedule('');
+          for (const fieldId of ['field-email', 'field-start', 'field-schedule']) {
+            document.getElementById(fieldId).hidden = true;
+          }
+        }
+        renderSchedule();
+
+        form.addEventListener('submit', (event) => {
+          event.preventDefault();
+
+          const data = {
+            name: nameEl.value.trim(),
+            phone: phoneEl.value.trim(),
+            email: emailEl.value.trim(),
+            role: currentRole(),
+            startDate: startEl.value,
+            schedule: composeSchedule(),
+          };
+
+          setError(nameEl, 'error-name', 'Ingresá el nombre.', !data.name);
+          setError(phoneEl, 'error-phone', 'Ingresá el teléfono.', !data.phone);
+          if (!data.name) {
+            nameEl.focus();
+            return;
+          }
+          if (!data.phone) {
+            phoneEl.focus();
+            return;
+          }
+
+          if (employee) {
+            updateEmployee(employee.id, data);
+            location.href = `/Webbyss/admin/empleado?id=${encodeURIComponent(employee.id)}`;
+            return;
+          }
+
+          // Alta: create the record, then hand over the completion link
+          // instead of redirecting to the list.
+          const created = appendEmployee({
+            name: data.name,
+            phone: data.phone,
+            role: data.role,
+          });
+          // ponytail: link carries data in the query; no backend to claim it yet.
+          const share = `/Webbyss/registro?nombre=${encodeURIComponent(
+            created.name,
+          )}&tel=${encodeURIComponent(created.phone)}&rol=${encodeURIComponent(
+            ROLE_NAME[created.role] || created.role,
+          )}&empleado=${encodeURIComponent(created.id)}`;
+
+          formView.hidden = true;
+          resultView.hidden = false;
+          resultName.textContent = created.name;
+          shareUrl.value = share;
+          openUrl.href = share;
+          window.scrollTo(0, 0);
+        });
+
+        copyBtn.addEventListener('click', async () => {
+          try {
+            await navigator.clipboard.writeText(shareUrl.value);
+            copyStatus.textContent = 'Link copiado';
+          } catch {
+            // ponytail: clipboard API needs a secure context — select it so
+            // the admin can still copy with Ctrl/Cmd+C.
+            shareUrl.focus();
+            shareUrl.select();
+            copyStatus.textContent = 'Link seleccionado, copiá con Ctrl+C';
+          }
+          copyStatus.hidden = false;
+        });
+      }
+    </script>
+  </body>
+</html>
+
+<style>
+  .page {
+    box-sizing: border-box;
+    min-height: 100vh;
+    min-height: 100dvh;
+    padding: var(--space-4);
+    font-family: var(--font-atkinson, sans-serif);
+    color: var(--color-text);
+    background: var(--color-bg);
+  }
+
+  .shell {
+    width: 100%;
+    max-width: 640px;
+    margin: 0 auto;
+    padding-bottom: var(--space-6);
+  }
+
+  .back {
+    display: inline-flex;
+    align-items: center;
+    min-height: 44px;
+    padding: 0 var(--space-1);
+    font-size: 0.95rem;
+    font-weight: 700;
+    text-decoration: none;
+    color: var(--color-accent);
+  }
+
+  .back:focus-visible {
+    outline: 2px solid var(--color-focus-ring);
+    outline-offset: 2px;
+  }
+
+  .page-title {
+    margin: var(--space-3) 0 var(--space-4);
+    font-family: var(--font-display, serif);
+    font-weight: 700;
+    font-size: clamp(1.8rem, 8vw, 2.4rem);
+    line-height: 1.1;
+    color: var(--color-heading);
+  }
+
+  .field {
+    margin-bottom: 0.95rem;
+  }
+
+  /* Direct children only: `.field label` / `.field input` (specificity 0,3,1 once
+     Astro adds its cid attributes) beat `.filter-check` (0,1,0) and squashed the
+     role dropdown into a full-width stacked radio. */
+  .field > label {
+    display: block;
+    margin-bottom: 0.45rem;
+    font-size: 0.8rem;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--color-text-muted);
+  }
+
+  .field > input {
+    box-sizing: border-box;
+    width: 100%;
+    min-height: 44px;
+    padding: 0.8rem 0.9rem;
+    font-family: inherit;
+    font-size: 1rem;
+    color: var(--color-field-text);
+    background: var(--color-field);
+    border: 1px solid var(--color-field-border);
+    border-radius: var(--radius-lg);
+    transition:
+      border-color 0.18s ease,
+      box-shadow 0.18s ease;
+  }
+
+  .field > input:hover {
+    border-color: var(--color-field-border-hover);
+  }
+
+  .field > input:focus-visible {
+    outline: none;
+    border-color: var(--color-accent);
+    box-shadow: 0 0 0 3px var(--color-accent-ring);
+  }
+
+  .field > input[aria-invalid='true'] {
+    border-color: var(--color-field-border-hover);
+    border-style: dashed;
+  }
+
+  .calendar {
+    box-sizing: border-box;
+    margin: 0 0 var(--space-2);
+    padding: var(--space-3);
+    background: var(--color-surface);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-lg);
+  }
+
+  /* Schedule blocks are rendered through innerHTML, so every rule that touches
+     them must be global (same reason as `.time-chip` in nueva-cita). */
+  :global(.pick-label) {
+    margin: var(--space-3) 0 var(--space-2);
+    font-size: 0.72rem;
+    font-weight: 700;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: var(--color-text-muted);
+  }
+
+  :global(.sched-head) {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: var(--space-2);
+  }
+
+  :global(.sched-head .pick-label) {
+    margin: 0;
+  }
+
+  :global(.sched-block + .sched-block) {
+    margin-top: var(--space-3);
+    padding-top: var(--space-3);
+    border-top: 1px solid var(--color-border);
+  }
+
+  :global(.day-row) {
+    display: grid;
+    grid-template-columns: repeat(7, minmax(0, 1fr));
+    gap: var(--space-1);
+  }
+
+  :global(.day-chip) {
+    box-sizing: border-box;
+    min-height: 44px;
+    padding: 0;
+    font-family: inherit;
+    font-size: 0.8rem;
+    font-weight: 700;
+    color: var(--color-text);
+    background: var(--color-field);
+    border: 1px solid var(--color-field-border);
+    border-radius: var(--radius-lg);
+    cursor: pointer;
+  }
+
+  :global(.day-chip.is-selected) {
+    color: var(--color-accent);
+    background: color-mix(in srgb, var(--color-accent) 12%, transparent);
+    border-color: var(--color-accent);
+  }
+
+  /* Desde/Hasta sit side by side so the whole pick collapses to one 44px row. */
+  :global(.sched-times) {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: var(--space-2);
+    margin-top: var(--space-2);
+  }
+
+  /* The hour panel is half the field wide, so 3 columns keeps every chip ≥50px
+     instead of 4 columns at ~41px (below the 44px touch target). */
+  :global(.sched-hours) {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: var(--space-2);
+  }
+
+  :global(.time-chip) {
+    min-height: 44px;
+    padding: 0.6rem var(--space-1);
+    font-family: inherit;
+    font-size: 0.9rem;
+    font-weight: 700;
+    color: var(--color-text);
+    background: var(--color-field);
+    border: 1px solid var(--color-field-border);
+    border-radius: var(--radius-lg);
+    cursor: pointer;
+    transition:
+      background 0.18s ease,
+      border-color 0.18s ease;
+  }
+
+  :global(.time-chip.is-disabled) {
+    color: var(--color-text-muted);
+    opacity: 0.4;
+    cursor: not-allowed;
+  }
+
+  :global(.time-chip.is-selected) {
+    color: var(--color-accent);
+    background: color-mix(in srgb, var(--color-accent) 12%, transparent);
+    border-color: var(--color-accent);
+  }
+
+  :global(.sched-remove) {
+    box-sizing: border-box;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 44px;
+    height: 44px;
+    padding: 0;
+    font-family: inherit;
+    font-size: 1.1rem;
+    line-height: 1;
+    color: var(--color-text-muted);
+    background: var(--color-field);
+    border: 1px solid var(--color-field-border);
+    border-radius: var(--radius-lg);
+    cursor: pointer;
+    transition:
+      color 0.18s ease,
+      border-color 0.18s ease;
+  }
+
+  :global(.sched-remove:hover) {
+    color: var(--color-accent);
+    border-color: var(--color-accent);
+  }
+
+  .add-sched {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: var(--space-2);
+    box-sizing: border-box;
+    width: 100%;
+    min-height: 44px;
+    margin-top: var(--space-3);
+    font-family: inherit;
+    font-size: 0.9rem;
+    font-weight: 700;
+    color: var(--color-text);
+    background: transparent;
+    border: 1px dashed var(--color-border);
+    border-radius: var(--radius-lg);
+    cursor: pointer;
+  }
+
+  :global(.day-chip:focus-visible),
+  :global(.time-chip:focus-visible),
+  :global(.sched-remove:focus-visible),
+  .add-sched:focus-visible {
+    outline: 2px solid var(--color-focus-ring);
+    outline-offset: 2px;
+  }
+
+  /* hidden must win over any default display. */
+  .field-error[hidden],
+  .field[hidden],
+  #form-view[hidden],
+  #result-view[hidden],
+  #fallback-view[hidden] {
+    display: none;
+  }
+
+  .result-lead {
+    margin: 0 0 var(--space-3);
+    color: var(--color-text);
+  }
+
+  /* High-contrast warning: the link is the whole hand-off. */
+  .result-warn {
+    margin: 0 0 var(--space-4);
+    padding: var(--space-3);
+    font-weight: 700;
+    color: var(--color-accent);
+    background: var(--color-accent-glow);
+    border: 1px solid var(--color-accent-line);
+    border-radius: var(--radius-lg);
+  }
+
+  .result-actions {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-3);
+    margin-top: var(--space-2);
+  }
+
+  .result-actions .cta {
+    margin-top: 0;
+  }
+
+  .open-link {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-sizing: border-box;
+    width: 100%;
+    min-height: 48px;
+    padding: var(--space-3);
+    font-family: inherit;
+    font-size: 0.95rem;
+    font-weight: 700;
+    letter-spacing: 0.04em;
+    text-align: center;
+    text-decoration: none;
+    color: var(--color-accent);
+    background: var(--color-surface);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-lg);
+  }
+
+  .open-link:focus-visible {
+    outline: 2px solid var(--color-focus-ring);
+    outline-offset: 2px;
+  }
+
+  .copy-status {
+    margin: var(--space-2) 0 0;
+    font-weight: 700;
+    color: var(--color-accent);
+  }
+
+  .field-error {
+    margin: 0.4rem 0 0;
+    font-size: 0.85rem;
+    font-weight: 700;
+    color: var(--color-text-muted);
+  }
+
+  .fallback-text {
+    margin: 0 0 var(--space-3);
+    color: var(--color-text-muted);
+  }
+
+  .cta {
+    display: block;
+    box-sizing: border-box;
+    width: 100%;
+    min-height: 48px;
+    margin-top: var(--space-3);
+    padding: 0.95rem var(--space-4);
+    font-family: inherit;
+    font-size: 1rem;
+    font-weight: 700;
+    letter-spacing: 0.04em;
+    cursor: pointer;
+    text-align: center;
+    color: var(--button-primary-fg);
+    background: var(--button-primary-bg);
+    border: 1px solid var(--button-primary-bg);
+    border-radius: var(--radius-lg);
+  }
+
+  .cta:focus-visible {
+    outline: 2px solid var(--button-primary-focus-outline);
+    outline-offset: 3px;
+  }
+
+  @media (min-width: 720px) {
+    .page {
+      padding: var(--space-6) var(--space-4);
+    }
+
+    .shell {
+      max-width: 720px;
+    }
+  }
+</style>
