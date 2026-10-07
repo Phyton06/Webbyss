@@ -174,6 +174,12 @@ test('alta takes only nombre/teléfono/rol and hands over a working completion U
 
   // No redirect: the result screen replaces the form on the same page.
   await expect(page).toHaveURL(/\/Webbyss\/admin\/nuevo-empleado\/?$/);
+
+  // One message only (the WhatsApp warning is merged into the lead line) and
+  // one action: copy. No "Abrir el link" second button.
+  await expect(page.locator('#result-view .result-warn')).toHaveCount(0);
+  await expect(page.locator('#result-view a')).toHaveCount(0);
+
   const shareUrl = await page.getByLabel('Link de registro').inputValue();
   expect(shareUrl).toMatch(/\/Webbyss\/registro\?/);
   expect(shareUrl).toContain('empleado=');

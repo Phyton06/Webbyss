@@ -20,7 +20,10 @@ async function createClient(
   // Alta never navigates on its own — it hands over the share link first.
   await expect(page).toHaveURL(/\/Webbyss\/admin\/nuevo-cliente/);
   await expect(page.getByRole('heading', { level: 1, name: 'Cliente registrado' })).toBeVisible();
-  await page.getByRole('link', { name: 'Ver la ficha del cliente' }).click();
+  // The result view carries no exit buttons, so the admin walks back through
+  // the list — the profile is reached from there, never auto-followed.
+  await page.goto('/Webbyss/admin/clientes');
+  await page.getByRole('link').filter({ hasText: phone }).click();
   await expect(page).toHaveURL(/\/Webbyss\/admin\/cliente\?id=/);
   await expect(page.getByRole('heading', { level: 1, name, exact: true })).toBeVisible();
 }
@@ -99,12 +102,11 @@ test('alta validates nombre/teléfono and hands over a shareable registration li
     `${origin}/Webbyss/registro?nombre=Cliente%20De%20Prueba&tel=%2B54%209%2011%205555-7777`,
   );
   await expect(page.getByRole('button', { name: 'Copiar link' })).toBeVisible();
-  await expect(page.getByRole('link', { name: 'Abrir el link' })).toBeVisible();
 
-  // The profile is one explicit click away, never followed automatically.
-  await page.getByRole('link', { name: 'Ver la ficha del cliente' }).click();
-  await expect(page).toHaveURL(/\/Webbyss\/admin\/cliente\?id=/);
-  await expect(page.getByRole('heading', { level: 1, name: 'Cliente De Prueba' })).toBeVisible();
+  // One message, one action: the hand-off is copying the link. No second
+  // copy of the warning and no exit buttons inside the result view.
+  await expect(page.locator('#result-view .result-warn')).toHaveCount(0);
+  await expect(page.locator('#result-view').getByRole('link')).toHaveCount(0);
 });
 
 test('an unknown id shows a fallback message instead of a blank page', async ({ page }) => {

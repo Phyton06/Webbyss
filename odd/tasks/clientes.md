@@ -131,6 +131,24 @@ alcanza).
   Evidencia: test 3 reescrito (validación + valor exacto del link + click a la
   ficha); el helper `createClient` ahora pasa por la vista de resultado.
 
+## Ronda 2 — simplificación del resultado de alta (2026-10-06)
+
+Sobrescribe lo anterior en tres puntos:
+
+- **Un solo mensaje en todos lados** (alta de cliente *y* de empleado): se
+  eliminó el recuadro `.result-warn` amarillo y esa frase se fusionó en
+  `.result-lead`, que ahora menciona WhatsApp y el propósito del link.
+- **Un solo botón de acción**: se quitó *Abrir el link* de las dos altas.
+  Queda únicamente *Copiar link*.
+- **Alta de cliente sin botones de salida**: se eliminaron *Ver la ficha del
+  cliente* y *Volver a clientes*; `#result-view` ya no contiene ningún `<a>`.
+  Ojo: `nuevo-cliente` y `nuevo-empleado` **no** renderizan `BottomNav`, así
+  que la única salida real es el botón atrás del navegador.
+- Tests: el helper `createClient` vuelve a la lista y entra por el teléfono;
+  el test de alta y el de empleados validan que `.result-warn` y los `<a>` de
+  `#result-view` no existen.
+- Evidencia: `npm run build` → 21 páginas; `npx playwright test` → **57/57**.
+
 ## Progreso
 
 - [x] T1
