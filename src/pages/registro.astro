@@ -14,6 +14,10 @@ import BaseHead from '../components/BaseHead.astro';
       <p class="tagline">Tus datos para agendar y recibir confirmaciones</p>
     </header>
 
+    <p class="employee-error" id="employee-error" hidden role="alert">
+      No encontramos ese empleado. Pedile al admin que genere el link de nuevo.
+    </p>
+
     <form id="registro-form">
       <div class="field">
         <label for="reg-nombre">Nombre y apellido</label>
@@ -23,6 +27,22 @@ import BaseHead from '../components/BaseHead.astro';
       <div class="field">
         <label for="reg-tel">Teléfono</label>
         <input type="tel" id="reg-tel" name="tel" autocomplete="tel" />
+      </div>
+
+      <!-- Employee mode only (shown when ?empleado= is present). -->
+      <div class="field" id="field-rol" hidden>
+        <label for="reg-rol">Rol</label>
+        <input type="text" id="reg-rol" name="rol" readonly />
+      </div>
+
+      <div class="field" id="field-schedule" hidden>
+        <label for="reg-schedule">Horario de trabajo</label>
+        <input
+          type="text"
+          id="reg-schedule"
+          name="schedule"
+          placeholder="Mar a Sáb · 9–19 h"
+        />
       </div>
 
       <div class="field">
@@ -58,18 +78,24 @@ import BaseHead from '../components/BaseHead.astro';
 
 <script>
   import { appendRegistered } from '../scripts/clients.js';
+  import { getEmployee, updateEmployee, ROLE_NAME } from '../scripts/employees.js';
 
   // Query params come from the wizard's share link: nombre/tel ride along
   // pre-filled and read-only, the client only owes email + contraseña.
   const params = new URLSearchParams(location.search);
   const nombre = (params.get('nombre') || '').trim();
   const tel = (params.get('tel') || '').trim();
+  const rolParam = (params.get('rol') || '').trim();
+  const empleadoId = (params.get('empleado') || '').trim();
 
   const nombreInput = document.getElementById('reg-nombre') as HTMLInputElement;
   const telInput = document.getElementById('reg-tel') as HTMLInputElement;
+  const rolInput = document.getElementById('reg-rol') as HTMLInputElement;
+  const scheduleInput = document.getElementById('reg-schedule') as HTMLInputElement;
   const emailInput = document.getElementById('reg-email') as HTMLInputElement;
   const form = document.getElementById('registro-form') as HTMLFormElement;
   const done = document.getElementById('registro-ok') as HTMLElement;
+  const errorBox = document.getElementById('employee-error') as HTMLElement;
 
   if (nombre !== '') {
     nombreInput.value = nombre;
@@ -80,8 +106,40 @@ import BaseHead from '../components/BaseHead.astro';
     telInput.readOnly = true;
   }
 
+  // ponytail: completion writes to this browser's localStorage; no backend sync yet.
+  const employee = empleadoId !== '' ? getEmployee(empleadoId) : null;
+
+  if (empleadoId !== '' && !employee) {
+    // Unknown id: a visible message, never a silent submit against a missing record.
+    form.hidden = true;
+    errorBox.hidden = false;
+  } else if (employee) {
+    (document.getElementById('field-rol') as HTMLElement).hidden = false;
+    (document.getElementById('field-schedule') as HTMLElement).hidden = false;
+    nombreInput.value = employee.name;
+    nombreInput.readOnly = true;
+    telInput.value = employee.phone;
+    telInput.readOnly = true;
+    // The live record wins, matching nombre/tel above — the `rol` param is only a
+    // fallback, otherwise a role edited after link generation shows stale.
+    rolInput.value = ROLE_NAME[employee.role] || employee.role || rolParam;
+    scheduleInput.value = employee.schedule || '';
+    emailInput.value = employee.email || '';
+  }
+
   form.addEventListener('submit', (event) => {
     event.preventDefault();
+    if (employee) {
+      // Employee mode: only schedule + email are collected; the client
+      // record (appendRegistered) must NOT be duplicated here.
+      updateEmployee(employee.id, {
+        schedule: scheduleInput.value.trim(),
+        email: emailInput.value.trim(),
+      });
+      form.hidden = true;
+      done.hidden = false;
+      return;
+    }
     // ponytail: demo record in localStorage — swap for Supabase auth later.
     appendRegistered({
       nombre: nombreInput.value.trim(),
@@ -141,6 +199,22 @@ import BaseHead from '../components/BaseHead.astro';
 
   .field {
     margin-bottom: var(--space-3);
+  }
+
+  /* hidden must win over any default display. */
+  .field[hidden],
+  .employee-error[hidden] {
+    display: none;
+  }
+
+  .employee-error {
+    margin: 0 0 var(--space-3);
+    padding: var(--space-3);
+    font-weight: 700;
+    color: var(--color-accent);
+    background: var(--color-accent-glow);
+    border: 1px solid var(--color-accent-line);
+    border-radius: var(--radius-lg);
   }
 
   .field label {

@@ -548,15 +548,28 @@ const base = import.meta.env.BASE_URL;
 
       // ─── Step 1: client search (SEARCH / COMBOBOX contract) ───
       // Shared by step 1 and the detail editor (both inject global classes).
+      // Banned clients are rendered too — greyed and `disabled` — because the
+      // admin needs to see WHY they cannot be picked, not lose them silently.
       const resultRows = (value) =>
         searchClients(value)
-          .map(
-            (client) => `
-            <button type="button" class="search-item" data-id="${escapeHtml(client.id)}">
-              <span class="search-item-name">${escapeHtml(client.name)}</span>
+          .map((client) => {
+            const notes = client.notes || [];
+            const latest = notes.length > 0 ? notes[notes.length - 1].text : '';
+            return `
+            <button
+              type="button"
+              class="search-item"
+              data-id="${escapeHtml(client.id)}"
+              ${client.banned ? 'data-banned="true" disabled aria-disabled="true"' : ''}
+            >
+              <span class="search-item-name"
+                >${escapeHtml(client.name)}${
+                  client.banned ? '<span class="ban-badge">BANEADO</span>' : ''
+                }${latest ? `<span class="search-item-note">${escapeHtml(latest)}</span>` : ''}</span
+              >
               <span class="search-item-phone">${escapeHtml(client.phone)}</span>
-            </button>`,
-          )
+            </button>`;
+          })
           .join('');
 
       function renderResults() {
@@ -592,7 +605,9 @@ const base = import.meta.env.BASE_URL;
 
       results.addEventListener('click', (event) => {
         const item = event.target.closest('.search-item');
-        if (!item) return;
+        // `disabled` already swallows clicks and keys; this is the belt-and-
+        // braces guard for programmatic dispatch.
+        if (!item || item.disabled) return;
         const client = searchClients('').find((entry) => entry.id === item.dataset.id);
         if (client) pickClient(client);
       });
@@ -866,7 +881,7 @@ const base = import.meta.env.BASE_URL;
 
       detailResults.addEventListener('click', (event) => {
         const item = event.target.closest('.search-item');
-        if (!item) return;
+        if (!item || item.disabled) return;
         const client = searchClients('').find((entry) => entry.id === item.dataset.id);
         if (!client) return;
         edit.client = client.name;

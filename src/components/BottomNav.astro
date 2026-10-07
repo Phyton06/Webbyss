@@ -1,0 +1,125 @@
+---
+// Shared admin bottom navigation (4 tabs, sticky at the viewport bottom).
+const base = import.meta.env.BASE_URL;
+
+// Normalize the URL: drop a trailing slash / index.html so the suffix
+// checks below work whether Astro serves the folder or the file.
+const path = Astro.url.pathname.replace(/\/+$/, '').replace(/\/index\.html$/, '');
+// Section keys match by substring: the cliente/empleado families each span a
+// list, a detail page and a form, so a single token covers the three.
+const inAdmin = path.includes('/admin/');
+const current = path.endsWith('/admin/agenda')
+  ? 'agenda'
+  : inAdmin && path.includes('cliente')
+    ? 'clientes'
+    : inAdmin && path.includes('empleado')
+      ? 'personal'
+      : path.endsWith('/admin')
+        ? 'inicio'
+        : '';
+
+const tabs = [
+  { key: 'inicio', label: 'Inicio', href: `${base}/admin/` },
+  { key: 'agenda', label: 'Agenda', href: `${base}/admin/agenda` },
+  { key: 'personal', label: 'Personal', href: `${base}/admin/empleados` },
+  // Replaces the old "Ajustes" placeholder, which pointed at home.
+  { key: 'clientes', label: 'Clientes', href: `${base}/admin/clientes` },
+];
+
+// 24×24 outline icons, currentColor — no icon font, no dependency.
+const icons = {
+  inicio:
+    '<path d="M3 10.5 12 3l9 7.5"/><path d="M5.5 9.5V21h13V9.5"/><path d="M9.5 21v-6h5v6"/>',
+  agenda:
+    '<rect x="3" y="5" width="18" height="16" rx="2"/><path d="M3 10h18M8 3v4M16 3v4"/>',
+  personal:
+    '<circle cx="12" cy="8" r="4"/><path d="M4 21c1.5-4 4.5-6 8-6s6.5 2 8 6"/>',
+  clientes:
+    '<circle cx="9" cy="8" r="3.4"/><path d="M3 20c0-3.3 2.7-6 6-6s6 2.7 6 6"/><path d="M16 5.2a3.4 3.4 0 0 1 0 5.6"/><path d="M18.2 14.6A6.6 6.6 0 0 1 21 19.4"/>',
+};
+---
+
+<nav class="bottom-nav" aria-label="Secciones del admin">
+  {
+    tabs.map((tab) => (
+      <a
+        class="bottom-nav-link"
+        href={tab.href}
+        aria-current={current === tab.key ? 'page' : undefined}
+      >
+        {/* set:html injects raw markup Astro cannot scope, so the <svg> wrapper
+            must live in this string — path/circle render nothing outside an svg. */}
+        <span
+          class="bottom-nav-icon"
+          aria-hidden="true"
+          set:html={`<svg viewBox="0 0 24 24">${icons[tab.key]}</svg>`}
+        />
+        <span class="bottom-nav-label">{tab.label}</span>
+      </a>
+    ))
+  }
+</nav>
+
+<style>
+  .bottom-nav {
+    position: sticky; /* rides the viewport bottom without covering content */
+    bottom: 0;
+    z-index: 40;
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    background: var(--color-surface);
+    border-top: 1px solid var(--color-border);
+  }
+
+  .bottom-nav-link {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 2px;
+    box-sizing: border-box;
+    min-height: 56px; /* ≥44×44 target (WCAG 2.5.5) */
+    padding: var(--space-2) var(--space-1);
+    text-decoration: none;
+    color: var(--color-text-muted);
+  }
+
+  .bottom-nav-link:focus-visible {
+    outline: 2px solid var(--color-focus-ring);
+    outline-offset: -3px;
+  }
+
+  .bottom-nav-icon {
+    display: block;
+    width: 24px;
+    height: 24px;
+  }
+
+  /* Astro inlines set:html content, so the SVG needs its own reset. */
+  .bottom-nav-icon :global(svg) {
+    display: block;
+    width: 100%;
+    height: 100%;
+    fill: none;
+    stroke: currentColor;
+    stroke-width: 1.7;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+  }
+
+  .bottom-nav-label {
+    font-size: 0.68rem;
+    font-weight: 700;
+    letter-spacing: 0.04em;
+  }
+
+  /* Active state: aria-current + underline + weight — never colour alone. */
+  .bottom-nav-link[aria-current='page'] {
+    color: var(--color-accent);
+  }
+
+  .bottom-nav-link[aria-current='page'] .bottom-nav-label {
+    text-decoration: underline;
+    text-underline-offset: 3px;
+  }
+</style>

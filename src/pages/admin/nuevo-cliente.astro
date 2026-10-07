@@ -1,0 +1,338 @@
+---
+import BaseHead from '../../components/BaseHead.astro';
+
+// ponytail: single form page for alta + edición; split only when the two
+// flows diverge. Chosen by `?id` (Astro is static, no per-id routes).
+const base = import.meta.env.BASE_URL;
+---
+
+<!doctype html>
+<html lang="es">
+  <head>
+    <BaseHead
+      title="Cliente — Admin | Webby's BarberShop"
+      description="Alta y edición de clientes de Webby's BarberShop"
+    />
+  </head>
+  <body>
+    <div class="page">
+      <div class="shell">
+        <a class="back" href="/Webbyss/admin/clientes">← Clientes</a>
+
+        <section id="form-view">
+          <h1 class="page-title" id="form-title">Nuevo cliente</h1>
+
+          <form id="client-form" novalidate>
+            <div class="field">
+              <label for="f-name">Nombre</label>
+              <input id="f-name" name="name" type="text" autocomplete="name" />
+              <p class="field-error" id="error-name" hidden>Ingresá el nombre.</p>
+            </div>
+
+            <div class="field">
+              <label for="f-phone">Teléfono</label>
+              <input id="f-phone" name="phone" type="tel" autocomplete="tel" />
+              <p class="field-error" id="error-phone" hidden>Ingresá el teléfono.</p>
+            </div>
+
+            <button class="cta" type="submit">Guardar cliente</button>
+          </form>
+        </section>
+
+        <section id="result-view" hidden>
+          <h1 class="page-title">Cliente registrado</h1>
+          <p class="result-lead">
+            Mandale este link a <strong id="result-name"></strong> por WhatsApp para que
+            complete su registro desde su teléfono.
+          </p>
+          <div class="field">
+            <label for="share-url">Link de registro</label>
+            <input id="share-url" type="text" readonly />
+          </div>
+          <div class="result-actions">
+            <button class="cta" type="button" id="copy-url">Copiar link</button>
+          </div>
+          <p class="copy-status" id="copy-status" hidden role="status"></p>
+        </section>
+
+        <section id="fallback-view" hidden>
+          <h1 class="page-title">No encontramos ese cliente</h1>
+          <p class="fallback-text">Revisá el enlace o volvé a la lista de clientes.</p>
+          <a class="back" href="/Webbyss/admin/clientes">Volver a clientes</a>
+        </section>
+      </div>
+    </div>
+
+    <script is:inline>
+      if (sessionStorage.getItem('webbys_admin') !== '1') {
+        location.replace('/Webbyss/login');
+      }
+    </script>
+
+    <script>
+      import { seedClients, readClients, updateClient, appendClient } from '../../scripts/clients.js';
+
+      const form = document.getElementById('client-form');
+      const formView = document.getElementById('form-view');
+      const resultView = document.getElementById('result-view');
+      const fallbackView = document.getElementById('fallback-view');
+      const titleEl = document.getElementById('form-title');
+
+      const nameEl = document.getElementById('f-name');
+      const phoneEl = document.getElementById('f-phone');
+
+      const resultName = document.getElementById('result-name');
+      const shareUrl = document.getElementById('share-url');
+      const copyBtn = document.getElementById('copy-url');
+      const copyStatus = document.getElementById('copy-status');
+
+      const id = new URLSearchParams(window.location.search).get('id');
+
+      // Deep links can land here on a fresh browser: seed before the lookup.
+      seedClients();
+      const client = id ? readClients().find((entry) => entry.id === id) : null;
+
+      if (id && !client) {
+        formView.hidden = true;
+        fallbackView.hidden = false;
+      } else if (client) {
+        titleEl.textContent = 'Editar cliente';
+        nameEl.value = client.name || '';
+        phoneEl.value = client.phone || '';
+      }
+
+      const setError = (input, errorId, message, show) => {
+        const box = document.getElementById(errorId);
+        box.hidden = !show;
+        box.textContent = message;
+        input.setAttribute('aria-invalid', show ? 'true' : 'false');
+      };
+
+      if (!id || client) {
+        form.addEventListener('submit', (event) => {
+          event.preventDefault();
+
+          const data = {
+            name: nameEl.value.trim(),
+            phone: phoneEl.value.trim(),
+          };
+
+          setError(nameEl, 'error-name', 'Ingresá el nombre.', !data.name);
+          setError(phoneEl, 'error-phone', 'Ingresá el teléfono.', !data.phone);
+          if (!data.name) {
+            nameEl.focus();
+            return;
+          }
+          if (!data.phone) {
+            phoneEl.focus();
+            return;
+          }
+
+          if (client) {
+            updateClient(client.id, data);
+            location.href = `/Webbyss/admin/cliente?id=${encodeURIComponent(client.id)}`;
+            return;
+          }
+
+          const created = appendClient(data);
+          // Registration hands over a shareable link instead of jumping to the
+          // profile: the admin's next move is sending it, not browsing a ficha.
+          // ponytail: the link carries data in the query; no backend yet.
+          const share = `${location.origin}/Webbyss/registro?nombre=${encodeURIComponent(
+            created.name,
+          )}&tel=${encodeURIComponent(created.phone)}`;
+
+          formView.hidden = true;
+          resultView.hidden = false;
+          resultName.textContent = created.name;
+          shareUrl.value = share;
+          window.scrollTo(0, 0);
+        });
+
+        copyBtn.addEventListener('click', async () => {
+          try {
+            await navigator.clipboard.writeText(shareUrl.value);
+            copyStatus.textContent = 'Link copiado';
+          } catch {
+            // ponytail: clipboard API needs a secure context — select it so
+            // the admin can still copy with Ctrl/Cmd+C.
+            shareUrl.focus();
+            shareUrl.select();
+            copyStatus.textContent = 'Link seleccionado, copiá con Ctrl+C';
+          }
+          copyStatus.hidden = false;
+        });
+      }
+    </script>
+  </body>
+</html>
+
+<style>
+  .page {
+    box-sizing: border-box;
+    min-height: 100vh;
+    min-height: 100dvh;
+    padding: var(--space-4);
+    font-family: var(--font-atkinson, sans-serif);
+    color: var(--color-text);
+    background: var(--color-bg);
+  }
+
+  .shell {
+    width: 100%;
+    max-width: 640px;
+    margin: 0 auto;
+    padding-bottom: var(--space-6);
+  }
+
+  .back {
+    display: inline-flex;
+    align-items: center;
+    min-height: 44px;
+    padding: 0 var(--space-1);
+    font-size: 0.95rem;
+    font-weight: 700;
+    text-decoration: none;
+    color: var(--color-accent);
+  }
+
+  .back:focus-visible {
+    outline: 2px solid var(--color-focus-ring);
+    outline-offset: 2px;
+  }
+
+  .page-title {
+    margin: var(--space-3) 0 var(--space-4);
+    font-family: var(--font-display, serif);
+    font-weight: 700;
+    font-size: clamp(1.8rem, 8vw, 2.4rem);
+    line-height: 1.1;
+    color: var(--color-heading);
+  }
+
+  .field {
+    margin-bottom: 0.95rem;
+  }
+
+  /* Direct children only: `.field label` / `.field input` (specificity 0,3,1 once
+     Astro adds its cid attributes) beat `.filter-check` (0,1,0) and squashed the
+     M3 dropdowns into full-width stacked radios. */
+  .field > label {
+    display: block;
+    margin-bottom: 0.45rem;
+    font-size: 0.8rem;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--color-text-muted);
+  }
+
+  .field > input {
+    box-sizing: border-box;
+    width: 100%;
+    min-height: 44px;
+    padding: 0.8rem 0.9rem;
+    font-family: inherit;
+    font-size: 1rem;
+    color: var(--color-field-text);
+    background: var(--color-field);
+    border: 1px solid var(--color-field-border);
+    border-radius: var(--radius-lg);
+    transition:
+      border-color 0.18s ease,
+      box-shadow 0.18s ease;
+  }
+
+  .field > input:hover {
+    border-color: var(--color-field-border-hover);
+  }
+
+  .field > input:focus-visible {
+    outline: none;
+    border-color: var(--color-accent);
+    box-shadow: 0 0 0 3px var(--color-accent-ring);
+  }
+
+  .field > input[aria-invalid='true'] {
+    border-color: var(--color-field-border-hover);
+    border-style: dashed;
+  }
+
+  .field-error {
+    margin: 0.4rem 0 0;
+    font-size: 0.85rem;
+    font-weight: 700;
+    color: var(--color-text-muted);
+  }
+
+  .field-error[hidden],
+  #form-view[hidden],
+  #result-view[hidden],
+  #fallback-view[hidden] {
+    display: none;
+  }
+
+  .result-lead {
+    margin: 0 0 var(--space-3);
+    color: var(--color-text);
+  }
+
+  .result-actions {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-3);
+    margin-top: var(--space-2);
+  }
+
+  .result-actions .cta {
+    margin-top: 0;
+  }
+
+  .copy-status {
+    margin: var(--space-2) 0 0;
+    font-weight: 700;
+    color: var(--color-accent);
+  }
+
+  .copy-status[hidden] {
+    display: none;
+  }
+
+  .fallback-text {
+    margin: 0 0 var(--space-3);
+    color: var(--color-text-muted);
+  }
+
+  .cta {
+    display: block;
+    box-sizing: border-box;
+    width: 100%;
+    min-height: 48px;
+    margin-top: var(--space-3);
+    padding: 0.95rem var(--space-4);
+    font-family: inherit;
+    font-size: 1rem;
+    font-weight: 700;
+    letter-spacing: 0.04em;
+    cursor: pointer;
+    text-align: center;
+    color: var(--button-primary-fg);
+    background: var(--button-primary-bg);
+    border: 1px solid var(--button-primary-bg);
+    border-radius: var(--radius-lg);
+  }
+
+  .cta:focus-visible {
+    outline: 2px solid var(--button-primary-focus-outline);
+    outline-offset: 3px;
+  }
+
+  @media (min-width: 720px) {
+    .page {
+      padding: var(--space-6) var(--space-4);
+    }
+
+    .shell {
+      max-width: 720px;
+    }
+  }
+</style>
